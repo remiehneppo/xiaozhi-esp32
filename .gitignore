@@ -16,5 +16,6 @@ main/mmap_generate_emoji.h
 .cache
 *.pyc
 *.bin
+!main/assets/common/watch_bg_240x240.bin
 mmap_generate_*.h
 .clangd

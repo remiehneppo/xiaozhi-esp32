@@ -5,17 +5,22 @@
 #include "application.h"
 #include "button.h"
 #include "config.h"
+#include "assets.h"
 #include "mcp_server.h"
 #include "lamp_controller.h"
 #include "led/single_led.h"
 #include "assets/lang_config.h"
+#include "display/lvgl_display/lvgl_image.h"
+#include "display/lvgl_display/lvgl_theme.h"
 
 #include <esp_log.h>
+#include <esp_heap_caps.h>
 #include <esp_lcd_gc9a01.h>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_vendor.h>
 #include <driver/spi_common.h>
+#include <cstring>
 
 #ifdef SH1106
 #include <esp_lcd_panel_sh1106.h>
@@ -41,6 +46,28 @@ public:
     void SetupUI() override {
         SpiLcdDisplay::SetupUI();
 
+        auto* theme = static_cast<LvglTheme*>(GetTheme());
+        if (theme != nullptr && background_image_ == nullptr) {
+            void* asset_data = nullptr;
+            size_t asset_size = 0;
+            if (Assets::GetInstance().GetAssetData("watch_bg_240x240.bin", asset_data, asset_size)) {
+                void* copied_data = heap_caps_malloc(asset_size, MALLOC_CAP_DEFAULT);
+                if (copied_data != nullptr) {
+                    std::memcpy(copied_data, asset_data, asset_size);
+                    background_image_ = std::make_shared<LvglAllocatedImage>(copied_data, asset_size);
+                    theme->set_background_image(background_image_);
+                } else {
+                    ESP_LOGE(TAG, "Failed to allocate memory for watch_bg_240x240.bin");
+                }
+            } else {
+                ESP_LOGW(TAG, "Background image asset watch_bg_240x240.bin not found");
+            }
+        }
+
+        if (theme != nullptr) {
+            SetTheme(theme);
+        }
+
         DisplayLockGuard lock(this);
         lv_obj_set_style_pad_left(top_bar_, 28, 0);
         lv_obj_set_style_pad_right(top_bar_, 28, 0);
@@ -50,6 +77,9 @@ public:
         lv_obj_set_style_clip_corner(container_, true, 0);
         lv_display_add_event_cb(display_, RounderEventCb, LV_EVENT_INVALIDATE_AREA, NULL);
     }
+
+private:
+    std::shared_ptr<LvglImage> background_image_ = nullptr;
 };
 
 class CompactWifiBoard : public WifiBoard {
