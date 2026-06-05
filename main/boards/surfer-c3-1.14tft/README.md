@@ -1,5 +1,4 @@
-## Surfer-ESP32-C3 开发板
+## Bo phát triển Surfer-ESP32-C3
 
-1、参考立创·实战派C3-ESP32C3开发板，修改了TFT屏幕背光引脚，增加ADC电池电量检测功能;
-2、该开发板 flash 大小为 16MB，编译时注意选择默认的分区表。
-
+1、Tham khảo bo phát triển C3-ESP32C3 của Lichuan · Shizhanpai, đã sửa đổi chân đèn nền màn hình TFT và thêm chức năng kiểm tra điện lượng pin ADC;
+2、Bo phát triển này có kích thước flash là 16MB, khi biên dịch hãy chú ý chọn bảng phân vùng mặc định.

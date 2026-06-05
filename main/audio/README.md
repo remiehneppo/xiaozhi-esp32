@@ -1,31 +1,31 @@
-# Audio Service Architecture
+# Kiến trúc Dịch vụ Âm thanh
 
-The audio service is a core component responsible for managing all audio-related functionalities, including capturing audio from the microphone, processing it, encoding/decoding, and playing back audio through the speaker. It is designed to be modular and efficient, running its main operations in dedicated FreeRTOS tasks to ensure real-time performance.
+Dịch vụ âm thanh là một thành phần cốt lõi chịu trách nhiệm quản lý tất cả các chức năng liên quan đến âm thanh, bao gồm thu âm từ micro, xử lý, mã hóa/giải mã và phát lại âm thanh qua loa. Nó được thiết kế để mô-đun và hiệu quả, chạy các hoạt động chính của nó trong các tác vụ FreeRTOS chuyên dụng để đảm bảo hiệu suất thời gian thực.
 
-## Key Components
+## Các Thành phần Chính
 
--   **`AudioService`**: The central orchestrator. It initializes and manages all other audio components, tasks, and data queues.
--   **`AudioCodec`**: A hardware abstraction layer (HAL) for the physical audio codec chip. It handles the raw I2S communication for audio input and output.
--   **`AudioProcessor`**: Performs real-time audio processing on the microphone input stream. This typically includes Acoustic Echo Cancellation (AEC), noise suppression, and Voice Activity Detection (VAD). `AfeAudioProcessor` is the default implementation, utilizing the ESP-ADF Audio Front-End.
--   **`WakeWord`**: Detects keywords (e.g., "你好，小智", "Hi, ESP") from the audio stream. It runs independently from the main audio processor until a wake word is detected.
--   **`OpusEncoderWrapper` / `OpusDecoderWrapper`**: Manages the encoding of PCM audio to the Opus format and decoding Opus packets back to PCM. Opus is used for its high compression and low latency, making it ideal for voice streaming.
--   **`OpusResampler`**: A utility to convert audio streams between different sample rates (e.g., resampling from the codec's native sample rate to the required 16kHz for processing).
+-   **`AudioService`**: Bộ điều phối trung tâm. Nó khởi tạo và quản lý tất cả các thành phần âm thanh, tác vụ và hàng đợi dữ liệu khác.
+-   **`AudioCodec`**: Một lớp trừu tượng hóa phần cứng (HAL) cho chip codec âm thanh vật lý. Nó xử lý giao tiếp I2S thô cho đầu vào và đầu ra âm thanh.
+-   **`AudioProcessor`**: Thực hiện xử lý âm thanh thời gian thực trên luồng đầu vào micro. Điều này thường bao gồm Khử tiếng vọng âm học (AEC), triệt tiêu nhiễu và Phát hiện Hoạt động Giọng nói (VAD). `AfeAudioProcessor` là triển khai mặc định, sử dụng ESP-ADF Audio Front-End.
+-   **`WakeWord`**: Phát hiện các từ khóa (ví dụ: "Xin chào, Xiaozhi", "Hi, ESP") từ luồng âm thanh. Nó chạy độc lập với bộ xử lý âm thanh chính cho đến khi phát hiện từ khóa đánh thức.
+-   **`OpusEncoderWrapper` / `OpusDecoderWrapper`**: Quản lý việc mã hóa âm thanh PCM sang định dạng Opus và giải mã các gói Opus trở lại PCM. Opus được sử dụng vì khả năng nén cao và độ trễ thấp, làm cho nó lý tưởng cho truyền phát giọng nói.
+-   **`OpusResampler`**: Một tiện ích để chuyển đổi các luồng âm thanh giữa các tốc độ mẫu khác nhau (ví dụ: lấy mẫu lại từ tốc độ mẫu gốc của codec sang 16kHz cần thiết cho xử lý).
 
-## Threading Model
+## Mô hình Luồng (Threading Model)
 
-The service operates on three primary tasks to handle the different stages of the audio pipeline concurrently:
+Dịch vụ hoạt động trên ba tác vụ chính để xử lý các giai đoạn khác nhau của đường ống âm thanh đồng thời:
 
-1.  **`AudioInputTask`**: Solely responsible for reading raw PCM data from the `AudioCodec`. It then feeds this data to either the `WakeWord` engine or the `AudioProcessor` based on the current state.
-2.  **`AudioOutputTask`**: Responsible for playing audio. It retrieves decoded PCM data from the `audio_playback_queue_` and sends it to the `AudioCodec` to be played on the speaker.
-3.  **`OpusCodecTask`**: A worker task that handles both encoding and decoding. It fetches raw audio from `audio_encode_queue_`, encodes it into Opus packets, and places them in the `audio_send_queue_`. Concurrently, it fetches Opus packets from `audio_decode_queue_`, decodes them into PCM, and places the result in the `audio_playback_queue_`.
+1.  **`AudioInputTask`**: Chỉ chịu trách nhiệm đọc dữ liệu PCM thô từ `AudioCodec`. Sau đó, nó đưa dữ liệu này đến `WakeWord` engine hoặc `AudioProcessor` dựa trên trạng thái hiện tại.
+2.  **`AudioOutputTask`**: Chịu trách nhiệm phát âm thanh. Nó truy xuất dữ liệu PCM đã giải mã từ `audio_playback_queue_` và gửi nó đến `AudioCodec` để phát trên loa.
+3.  **`OpusCodecTask`**: Một tác vụ làm việc xử lý cả mã hóa và giải mã. Nó lấy âm thanh thô từ `audio_encode_queue_`, mã hóa nó thành các gói Opus, và đặt chúng vào `audio_send_queue_`. Đồng thời, nó lấy các gói Opus từ `audio_decode_queue_`, giải mã chúng thành PCM, và đặt kết quả vào `audio_playback_queue_`.
 
-## Data Flow
+## Luồng Dữ liệu (Data Flow)
 
-There are two primary data flows: audio input (uplink) and audio output (downlink).
+Có hai luồng dữ liệu chính: đầu vào âm thanh (uplink) và đầu ra âm thanh (downlink).
 
-### 1. Audio Input (Uplink) Flow
+### 1. Luồng Đầu vào Âm thanh (Uplink)
 
-This flow captures audio from the microphone, processes it, encodes it, and prepares it for sending to a server.
+Luồng này thu âm từ micro, xử lý nó, mã hóa nó và chuẩn bị nó để gửi đến máy chủ.
 
 ```mermaid
 graph TD
@@ -47,42 +47,3 @@ graph TD
     end
     
     App -->|Network| Server((Cloud Server))
-```
-
--   The `AudioInputTask` continuously reads raw PCM data from the `AudioCodec`.
--   This data is fed into an `AudioProcessor` for cleaning (AEC, VAD).
--   The processed PCM data is pushed into the `audio_encode_queue_`.
--   The `OpusCodecTask` picks up the PCM data, encodes it into Opus format, and pushes the resulting packet to the `audio_send_queue_`.
--   The application can then retrieve these Opus packets and send them over the network.
-
-### 2. Audio Output (Downlink) Flow
-
-This flow receives encoded audio data, decodes it, and plays it on the speaker.
-
-```mermaid
-graph TD
-    Server((Cloud Server)) -->|Network| App(Application Layer)
-
-    subgraph Device
-        App -->|"PushPacketToDecodeQueue()"| DecodeQueue(audio_decode_queue_)
-
-        subgraph OpusCodecTask
-            DecodeQueue -->|Opus Packet| Decoder(OpusDecoder)
-            Decoder -->|PCM| PlaybackQueue(audio_playback_queue_)
-        end
-
-        subgraph AudioOutputTask
-            PlaybackQueue -->|PCM| Codec(AudioCodec)
-        end
-
-        Codec -->|I2S| Speaker[("Speaker")]
-    end
-```
-
--   The application receives Opus packets from the network and pushes them into the `audio_decode_queue_`.
--   The `OpusCodecTask` retrieves these packets, decodes them back into PCM data, and pushes the data to the `audio_playback_queue_`.
--   The `AudioOutputTask` takes the PCM data from the queue and sends it to the `AudioCodec` for playback.
-
-## Power Management
-
-To conserve energy, the audio codec's input (ADC) and output (DAC) channels are automatically disabled after a period of inactivity (`AUDIO_POWER_TIMEOUT_MS`). A timer (`audio_power_timer_`) periodically checks for activity and manages the power state. The channels are automatically re-enabled when new audio needs to be captured or played. 

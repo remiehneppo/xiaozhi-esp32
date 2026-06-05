@@ -1,14 +1,9 @@
-## EDA-Robot-Pro 机器狗
+## EDA-Robot-Pro Chó robot
 
-### 项目文档
-- [EDA-Robot-Pro 项目文档](https://wiki.lceda.cn/zh-hans/course-projects/smart-internet/eda-robot/eda-robot-introduce.html)
+### Tài liệu dự án
+- [Tài liệu dự án EDA-Robot-Pro](https://wiki.lceda.cn/zh-hans/course-projects/smart-internet/eda-robot/eda-robot-introduce.html)
 
-### 编译配置
-Flash大小按ESP32S3模组大小调整  
-例如模组Flash容量为8MB时：
+### Cấu hình biên dịch
+Kích thước Flash được điều chỉnh theo kích thước module ESP32S3
+Ví dụ, khi dung lượng Flash của module là 8MB:
 
-```
-Partition Table  --->
-  Partition Table (Custom partition table CSV)  --->
-  (partitions/v2/8m.csv) Custom partition CSV file
-```

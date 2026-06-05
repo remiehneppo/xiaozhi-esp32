@@ -1,12 +1,12 @@
-# 说明 / Description
+# Hướng dẫn / Description
 
-## 中文
+## Tiếng Trung
 
-本目录代码移植自 LVGL 的 GIF 程序。
+Mã nguồn trong thư mục này được chuyển thể từ chương trình GIF của LVGL.
 
-主要修复和改进：
-- 修复了透明背景问题
-- 兼容了 87a 版本的 GIF 格式
+Các sửa lỗi và cải tiến chính:
+- Đã sửa lỗi nền trong suốt
+- Tương thích với định dạng GIF phiên bản 87a
 
 ## English
 

@@ -1,49 +1,25 @@
-# 产品相关介绍网址
+# Trang giới thiệu sản phẩm
 
-## 简介
-征辰科技 AI camera是小智AI的魔改项目，做了大量创新和优化。
+## Giới thiệu
+Camera AI của Zhengchen Technology là một dự án tùy chỉnh (mod) của XiaoZhi AI, đã thực hiện nhiều đổi mới và tối ưu hóa.
 
-## 合并版
-合并版代码在小智AI主项目中维护，跟随主项目的一起版本更新，便于用户自行扩展和第三方固件扩展。支持语音唤醒、语音打断、OTA等功能。
+## Phiên bản hợp nhất
+Mã nguồn phiên bản hợp nhất được duy trì trong dự án chính của XiaoZhi AI, cập nhật phiên bản cùng với dự án chính, giúp người dùng tự mở rộng và mở rộng firmware của bên thứ ba. Hỗ trợ các chức năng như đánh thức bằng giọng nói, ngắt bằng giọng nói, OTA, v.v.
 
-## 魔改版
-魔改版由于底层改动太大，代码单独维护，定期合并主项目代码。
+## Phiên bản tùy chỉnh (mod)
+Phiên bản tùy chỉnh (mod) do thay đổi nền tảng quá lớn nên mã nguồn được duy trì riêng, và được hợp nhất với mã nguồn dự án chính định kỳ.
 
 https://e.tb.cn/h.6Gl2LC7rsrswQZp?tk=qFuaV9hzh0k CZ356
-```
-【淘宝】 「小智AI带摄像头支持识物双麦克风打断 ESP32S3N16R8开发板表情包」
+【Taobao】 "XiaoZhi AI có camera, hỗ trợ nhận diện vật thể, bo mạch ESP32S3N16R8 với hai micro và khả năng ngắt lời bằng giọng nói"
 https://e.tb.cn/h.hBc8Gcx9cUluJJO?tk=YW5C4LPixKg
 
 
 
-## 配置、编译命令
+## Lệnh cấu hình và biên dịch
 
-由于此项目需要配置较多的 sdkconfig 选项，推荐使用编译脚本编译。
+Vì dự án này cần cấu hình nhiều tùy chọn sdkconfig, nên khuyến nghị sử dụng script biên dịch.
 
-**编译**
+**Biên dịch**
 
 ```bash
 python ./scripts/release.py zhengchen-cam
-```
-
-如需手动编译，请参考 `zhengchen-cam/config.json` 修改 menuconfig 对应选项。
-
-**烧录**
-
-```bash
-idf.py flash
-
-
-```
-
-MCP Tool：
-self.get_device_status
-self.audio_speaker.set_volume
-self.screen.set_brightness
-self.screen.set_theme
-self.gif.set_gif_mode
-self.display.set_mode
-self.camera.take_photo       
-self.AEC.set_mode
-self.AEC.get_mode
-self.res.esp_restart

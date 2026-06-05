@@ -1,39 +1,39 @@
 # jiuchuan-xiaozhi-sound
-九川科技小智AI音箱
+Loa AI XiaoZhi của Jiuchuan Technology
 
-## 🛠️ 编译指南
-**开发环境**：ESP-IDF v5.4.1
+## 🛠️ Hướng dẫn biên dịch
+**Môi trường phát triển**: ESP-IDF v5.4.1
 
-### 编译步骤：
-> ⚠️ **提示**：若在编译过程中访问在线库失败，可以尝试切换加速器状态，或修改 [idf_component.yml] 文件，替换为国内镜像源。
+### Các bước biên dịch:
+> ⚠️ **Gợi ý**: Nếu việc truy cập thư viện trực tuyến thất bại trong quá trình biên dịch, bạn có thể thử chuyển đổi trạng thái tăng tốc, hoặc sửa đổi tệp [idf_component.yml] để thay thế bằng nguồn gương trong nước.
 
-1. 使用 VSCode 打开项目文件夹；
-2. 清除工程（Clean Project）；
-3. 设置 ESP-IDF 版本为 `v5.4.1`；
-4. 点击 VSCode 右下角提示，生成 [compile_commands.json] 文件；
-5. 设置目标设备为 `[esp32s3] -> [JTAG]`；
-6. 打开 **SDK Configuration Editor**；
-7. 设置 **Board Type** 为 **九川科技**；
-8. 保存配置并开始编译。
+1. Mở thư mục dự án bằng VSCode;
+2. Xóa dự án (Clean Project);
+3. Đặt phiên bản ESP-IDF là `v5.4.1`;
+4. Nhấp vào gợi ý ở góc dưới bên phải của VSCode để tạo tệp [compile_commands.json];
+5. Đặt thiết bị mục tiêu là `[esp32s3] -> [JTAG]`;
+6. Mở **SDK Configuration Editor**;
+7. Đặt **Board Type** là **Jiuchuan Technology**;
+8. Lưu cấu hình và bắt đầu biên dịch.
 
-## 🔌 烧录步骤
-1. 使用数据线连接电脑与音箱；
-2. 关闭设备电源后，长按电源键不松手；
-3. 在烧录工具中选择对应的串口（COM Port）；
-4. 点击烧录按钮，选择 UART 模式；
-5. 烧录完成前请勿松开电源键。
-
-
-## 引脚
-- 1-9：
-  - 1. DAT2     ： NC
-  - 2. CD/DAT3  ： 片选，低电平有效。（未知）
-  - 3. CMD      ： IO48（Command/Response Line），主机通过此线向TF卡发送命令和数据
-  - 4. VDD      ： 供电
-  - 5. CLX      ： IO47（时钟），由主机产生，同步数据通信
-  - 6. VSS      ： GND
-  - 7. DAT0     ： IO21，SPI_MISO，TF卡通过此线向主机返回响应和数据
-  - 8. DAT1     ： NC
+## 🔌 Các bước nạp (Flashing)
+1. Sử dụng cáp dữ liệu để kết nối máy tính với loa;
+2. Sau khi tắt nguồn thiết bị, nhấn và giữ nút nguồn;
+3. Chọn cổng nối tiếp (COM Port) tương ứng trong công cụ nạp;
+4. Nhấp vào nút nạp, chọn chế độ UART;
+5. Vui lòng không nhả nút nguồn trước khi quá trình nạp hoàn tất.
 
 
-  依次为从右向左为1-9
+## Chân (Pins)
+- 1-9:
+  - 1. DAT2     : NC
+  - 2. CD/DAT3  : Chip Select, mức thấp hoạt động. (Chưa rõ)
+  - 3. CMD      : IO48 (Command/Response Line), máy chủ gửi lệnh và dữ liệu đến thẻ TF qua đường này
+  - 4. VDD      : Cung cấp nguồn
+  - 5. CLX      : IO47 (Clock), được máy chủ tạo ra, đồng bộ hóa giao tiếp dữ liệu
+  - 6. VSS      : GND
+  - 7. DAT0     : IO21, SPI_MISO, thẻ TF trả về phản hồi và dữ liệu cho máy chủ qua đường này
+  - 8. DAT1     : NC
+
+
+  Theo thứ tự từ phải sang trái là 1-9

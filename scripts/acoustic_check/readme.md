@@ -1,23 +1,23 @@
-# 声波测试
-该gui用于测试接受小智设备通过`udp`回传的`pcm`转时域/频域, 可以保存窗口长度的声音, 用于判断噪音频率分布和测试声波传输ascii的准确度,
+# Kiểm tra sóng âm
+GUI này được sử dụng để kiểm tra việc chuyển đổi PCM được truyền ngược lại qua `udp` từ thiết bị Xiaozhi sang miền thời gian/miền tần số, có thể lưu trữ âm thanh theo độ dài cửa sổ, dùng để xác định phân bố tần số nhiễu và kiểm tra độ chính xác của truyền tải ASCII sóng âm,
 
-固件测试需要打开`USE_AUDIO_DEBUGGER`, 并设置好`AUDIO_DEBUG_UDP_SERVER`是本机地址.
-声波`demod`可以通过`sonic_wifi_config.html`或者上传至`PinMe`的[小智声波配网](https://iqf7jnhi.pinit.eth.limo)来输出声波测试
+Để kiểm tra firmware, cần bật `USE_AUDIO_DEBUGGER` và thiết lập `AUDIO_DEBUG_UDP_SERVER` là địa chỉ máy cục bộ.
+Kiểm tra sóng âm `demod` có thể được thực hiện bằng cách sử dụng `sonic_wifi_config.html` hoặc tải lên [Cấu hình mạng sóng âm Xiaozhi](https://iqf7jnhi.pinit.eth.limo) trên `PinMe`
 
-# 声波解码测试记录
+# Ghi chép kiểm tra giải mã sóng âm
 
-> `✓`代表在I2S DIN接收原始PCM信号时就能成功解码, `△`代表需要降噪或额外操作可稳定解码, `X`代表降噪后效果也不好(可能能解部分但非常不稳定)。
-> 个别ADC需要I2C配置阶段做更精细的降噪调整, 由于设备不通用暂只按照boards内提供的config测试
+> `✓` đại diện cho việc giải mã thành công khi nhận tín hiệu PCM thô qua I2S DIN, `△` đại diện cho việc cần khử nhiễu hoặc thao tác bổ sung để giải mã ổn định, `X` đại diện cho hiệu quả không tốt ngay cả sau khi khử nhiễu (có thể giải mã một phần nhưng rất không ổn định).
+> Một số ADC cần điều chỉnh khử nhiễu tinh vi hơn trong giai đoạn cấu hình I2C, do thiết bị không phổ thông nên tạm thời chỉ kiểm tra theo config được cung cấp trong boards
 
-| 设备 | ADC | MIC | 效果 | 备注 |
+| Thiết bị | ADC | MIC | Hiệu quả | Ghi chú |
 | ---- | ---- | --- | --- | ---- |
-| bread-compact | INMP441 | 集成MEMEMIC | ✓ |
+| bread-compact | INMP441 | MEMEMIC tích hợp | ✓ |
 | atk-dnesp32s3-box | ES8311 | | ✓ |
 | magiclick-2p5 | ES8311 | | ✓ |
-| lichuang-dev  | ES7210 | | △ | 测试时需要关掉INPUT_REFERENCE
-| kevin-box-2 | ES7210 | | △ | 测试时需要关掉INPUT_REFERENCE
-| m5stack-core-s3 | ES7210 | | △ | 测试时需要关掉INPUT_REFERENCE
-| xmini-c3 | ES8311 | | △ | 需降噪
-| atoms3r-echo-base | ES8311 | | △ | 需降噪
-| atk-dnesp32s3-box0 | ES8311 | | X | 能接收且解码, 但是丢包率很高
-| movecall-moji-esp32s3 | ES8311 | | X | 能接收且解码, 但是丢包率很高
+| lichuang-dev | ES7210 | | △ | Khi kiểm tra cần tắt INPUT_REFERENCE
+| kevin-box-2 | ES7210 | | △ | Khi kiểm tra cần tắt INPUT_REFERENCE
+| m5stack-core-s3 | ES7210 | | △ | Khi kiểm tra cần tắt INPUT_REFERENCE
+| xmini-c3 | ES8311 | | △ | Cần khử nhiễu
+| atoms3r-echo-base | ES8311 | | △ | Cần khử nhiễu
+| atk-dnesp32s3-box0 | ES8311 | | X | Có thể nhận và giải mã, nhưng tỉ lệ mất gói rất cao
+| movecall-moji-esp32s3 | ES8311 | | X | Có thể nhận và giải mã, nhưng tỉ lệ mất gói rất cao

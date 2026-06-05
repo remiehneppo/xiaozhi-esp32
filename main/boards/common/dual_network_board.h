@@ -6,47 +6,47 @@
 #include "ml307_board.h"
 #include <memory>
 
-//enum NetworkType
+// enum NetworkType
 enum class NetworkType {
     WIFI,
     ML307
 };
 
-// 双网络板卡类，可以在WiFi和ML307之间切换
+// Lớp bo mạch hai mạng, có thể chuyển đổi giữa WiFi và ML307
 class DualNetworkBoard : public Board {
 private:
-    // 使用基类指针存储当前活动的板卡
+    // Dùng con trỏ lớp cơ sở để lưu bo mạch đang hoạt động
     std::unique_ptr<Board> current_board_;
     NetworkType network_type_ = NetworkType::ML307;  // Default to ML307
 
-    // ML307的引脚配置
+    // Cấu hình chân của ML307
     gpio_num_t ml307_tx_pin_;
     gpio_num_t ml307_rx_pin_;
     gpio_num_t ml307_dtr_pin_;
     
-    // 从Settings加载网络类型
+    // Tải loại mạng từ Settings
     NetworkType LoadNetworkTypeFromSettings(int32_t default_net_type);
     
-    // 保存网络类型到Settings
+    // Lưu loại mạng vào Settings
     void SaveNetworkTypeToSettings(NetworkType type);
 
-    // 初始化当前网络类型对应的板卡
+    // Khởi tạo bo mạch tương ứng với loại mạng hiện tại
     void InitializeCurrentBoard();
  
 public:
     DualNetworkBoard(gpio_num_t ml307_tx_pin, gpio_num_t ml307_rx_pin, gpio_num_t ml307_dtr_pin = GPIO_NUM_NC, int32_t default_net_type = 1);
     virtual ~DualNetworkBoard() = default;
  
-    // 切换网络类型
+    // Chuyển đổi loại mạng
     void SwitchNetworkType();
     
-    // 获取当前网络类型
+    // Lấy loại mạng hiện tại
     NetworkType GetNetworkType() const { return network_type_; }
     
-    // 获取当前活动的板卡引用
+    // Lấy tham chiếu đến bo mạch đang hoạt động
     Board& GetCurrentBoard() const { return *current_board_; }
     
-    // 重写Board接口
+    // Ghi đè giao diện Board
     virtual std::string GetBoardType() override;
     virtual void StartNetwork() override;
     virtual void SetNetworkEventCallback(NetworkEventCallback callback) override;

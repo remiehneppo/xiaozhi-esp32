@@ -1,34 +1,34 @@
-# BluFi Provisioning (with `esp-wifi-connect`)
+# Cung cấp BluFi (với `esp-wifi-connect`)
 
-This document explains how to enable and use BluFi (BLE-based WiFi provisioning) in the XiaoZhi firmware, together with the in-tree `esp-wifi-connect` component that handles WiFi connection and credential storage. See the official [Espressif BluFi documentation](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/ble/blufi.html) for the protocol details.
+Tài liệu này giải thích cách bật và sử dụng BluFi (cung cấp WiFi dựa trên BLE) trong firmware XiaoZhi, cùng với thành phần `esp-wifi-connect` trong cây dự án xử lý kết nối WiFi và lưu trữ thông tin xác thực. Xem [tài liệu BluFi chính thức của Espressif](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/ble/blufi.html) để biết chi tiết về giao thức.
 
-## Prerequisites
+## Điều kiện tiên quyết
 
-- A chip and firmware configuration that support BLE.
-- In `idf.py menuconfig`, enable `WiFi Configuration Method -> Esp Blufi` (`CONFIG_USE_ESP_BLUFI_WIFI_PROVISIONING=y`). If you want to use BluFi, disable the Hotspot option in the same menu; otherwise hotspot provisioning wins by default.
-- Keep the default NVS and event-loop initialization provided by the project's `app_main`.
-- Exactly one of `CONFIG_BT_BLUEDROID_ENABLED` / `CONFIG_BT_NIMBLE_ENABLED` must be selected; they are mutually exclusive.
+- Một chip và cấu hình firmware hỗ trợ BLE.
+- Trong `idf.py menuconfig`, bật `WiFi Configuration Method -> Esp Blufi` (`CONFIG_USE_ESP_BLUFI_WIFI_PROVISIONING=y`). Nếu bạn muốn sử dụng BluFi, hãy tắt tùy chọn Hotspot trong cùng menu; nếu không, việc cung cấp hotspot sẽ thắng mặc định.
+- Giữ nguyên việc khởi tạo NVS và event-loop mặc định do `app_main` của dự án cung cấp.
+- Chính xác một trong `CONFIG_BT_BLUEDROID_ENABLED` / `CONFIG_BT_NIMBLE_ENABLED` phải được chọn; chúng loại trừ lẫn nhau.
 
-## Workflow
+## Quy trình làm việc
 
-1. A phone (using the official EspBlufi app or another BluFi client) connects to the device over BLE and sends the target WiFi SSID / password. The phone can also request the list of WiFi networks scanned by the device through the BluFi protocol.
-2. In `ESP_BLUFI_EVENT_REQ_CONNECT_TO_AP`, the device stores the credentials into `SsidManager` (persisted in NVS by the `esp-wifi-connect` component).
-3. The device then launches `WifiStation` to scan and connect; progress is reported back over BluFi.
-4. If provisioning succeeds, the device connects to the new WiFi automatically. If it fails, an error status is sent back.
+1. Một điện thoại (sử dụng ứng dụng EspBlufi chính thức hoặc một client BluFi khác) kết nối với thiết bị qua BLE và gửi SSID / mật khẩu WiFi mục tiêu. Điện thoại cũng có thể yêu cầu danh sách các mạng WiFi được thiết bị quét thông qua giao thức BluFi.
+2. Trong `ESP_BLUFI_EVENT_REQ_CONNECT_TO_AP`, thiết bị lưu trữ thông tin xác thực vào `SsidManager` (được lưu trữ trong NVS bởi thành phần `esp-wifi-connect`).
+3. Thiết bị sau đó khởi chạy `WifiStation` để quét và kết nối; tiến trình được báo cáo lại qua BluFi.
+4. Nếu việc cung cấp thành công, thiết bị tự động kết nối với WiFi mới. Nếu thất bại, một trạng thái lỗi sẽ được gửi lại.
 
-## Steps
+## Các bước
 
-1. **Configure**: turn on `Esp Blufi` in menuconfig, then build and flash the firmware.
-2. **Trigger provisioning**: at first boot with no stored WiFi credentials the device enters provisioning automatically.
-3. **Phone side**: open the EspBlufi app (or another BluFi client), scan and connect to the device, optionally enable encryption, then enter the WiFi SSID / password and send them.
-4. **Observe the result**:
-   - Success: BluFi reports success and the device connects to WiFi.
-   - Failure: BluFi reports failure; retry or check the router.
+1. **Cấu hình**: bật `Esp Blufi` trong menuconfig, sau đó build và flash firmware.
+2. **Kích hoạt cung cấp**: ở lần khởi động đầu tiên mà không có thông tin xác thực WiFi được lưu trữ, thiết bị tự động vào chế độ cung cấp.
+3. **Phía điện thoại**: mở ứng dụng EspBlufi (hoặc client BluFi khác), quét và kết nối với thiết bị, tùy chọn bật mã hóa, sau đó nhập SSID / mật khẩu WiFi và gửi chúng.
+4. **Quan sát kết quả**:
+   - Thành công: BluFi báo cáo thành công và thiết bị kết nối với WiFi.
+   - Thất bại: BluFi báo cáo thất bại; thử lại hoặc kiểm tra bộ định tuyến.
 
-## Notes
+## Lưu ý
 
-- BluFi cannot be used at the same time as hotspot provisioning. If hotspot provisioning is already enabled, the device will use it. Keep only one provisioning method in menuconfig.
-- When running repeated tests, clear or overwrite the stored SSID (`wifi` NVS namespace) to avoid stale credentials interfering with the next run.
-- If you write your own BluFi client, follow the official protocol frame format linked above.
-- The EspBlufi app download links are listed in the official documentation.
-- Because the BluFi API changed in IDF 5.5.2, firmware built with 5.5.2 advertises the Bluetooth name as `"Xiaozhi-Blufi"`, while 5.5.1 uses `"BLUFI_DEVICE"`.
+- BluFi không thể được sử dụng đồng thời với việc cung cấp hotspot. Nếu việc cung cấp hotspot đã được bật, thiết bị sẽ sử dụng nó. Chỉ giữ một phương thức cung cấp trong menuconfig.
+- Khi chạy các bài kiểm tra lặp lại, hãy xóa hoặc ghi đè SSID đã lưu (`wifi` namespace NVS) để tránh thông tin xác thực cũ can thiệp vào lần chạy tiếp theo.
+- Nếu bạn tự viết client BluFi của mình, hãy làm theo định dạng khung giao thức chính thức được liên kết ở trên.
+- Các liên kết tải xuống ứng dụng EspBlufi được liệt kê trong tài liệu chính thức.
+- Vì API BluFi đã thay đổi trong IDF 5.5.2, firmware được build với 5.5.2 quảng cáo tên Bluetooth là `"Xiaozhi-Blufi"`, trong khi 5.5.1 sử dụng `"BLUFI_DEVICE"`.

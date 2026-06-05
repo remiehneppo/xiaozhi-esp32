@@ -16,11 +16,11 @@ struct AudioStreamPacket {
 
 struct BinaryProtocol2 {
     uint16_t version;
-    uint16_t type;          // Message type (0: OPUS, 1: JSON)
-    uint32_t reserved;      // Reserved for future use
-    uint32_t timestamp;     // Timestamp in milliseconds (used for server-side AEC)
-    uint32_t payload_size;  // Payload size in bytes
-    uint8_t payload[];      // Payload data
+    uint16_t type;          // Loại thông điệp (0: OPUS, 1: JSON)
+    uint32_t reserved;      // Dành riêng cho mục đích tương lai
+    uint32_t timestamp;     // Dấu thời gian tính bằng mili giây (dùng cho AEC phía server)
+    uint32_t payload_size;  // Kích thước payload tính bằng byte
+    uint8_t payload[];      // Dữ liệu payload
 } __attribute__((packed));
 
 struct BinaryProtocol3 {
@@ -38,7 +38,7 @@ enum AbortReason {
 enum ListeningMode {
     kListeningModeAutoStop,
     kListeningModeManualStop,
-    kListeningModeRealtime // 需要 AEC 支持
+    kListeningModeRealtime // Cần hỗ trợ AEC
 };
 
 class Protocol {
@@ -95,4 +95,3 @@ protected:
 };
 
 #endif // PROTOCOL_H
-

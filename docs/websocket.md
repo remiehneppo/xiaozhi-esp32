@@ -1,26 +1,26 @@
-# WebSocket Communication Protocol
+# Giao thức Truyền thông WebSocket
 
-This document describes the WebSocket communication protocol between the device and the server, based on the current code. When implementing a server, please cross-check with the actual implementation.
+Tài liệu này mô tả giao thức truyền thông WebSocket giữa thiết bị và máy chủ, dựa trên mã hiện tại. Khi triển khai máy chủ, vui lòng kiểm tra chéo với việc triển khai thực tế.
 
 ---
 
-## 1. Overall Flow
+## 1. Luồng Tổng thể
 
-1. **Device initialization**
-   - The device boots and initializes `Application`:
-     - Initializes the audio codec, display, LEDs, etc.
-     - Connects to the network.
-     - Creates a WebSocket protocol instance (`WebsocketProtocol`) that implements the `Protocol` interface.
-   - Enters the main loop and waits for events (audio input, audio output, scheduled tasks, etc.).
+1. **Khởi tạo Thiết bị**
+   - Thiết bị khởi động và khởi tạo `Application`:
+     - Khởi tạo bộ mã hóa âm thanh, màn hình, đèn LED, v.v.
+     - Kết nối với mạng.
+     - Tạo một thể hiện giao thức WebSocket (`WebsocketProtocol`) thực hiện giao diện `Protocol`.
+   - Vào vòng lặp chính và chờ các sự kiện (đầu vào âm thanh, đầu ra âm thanh, tác vụ theo lịch trình, v.v.).
 
-2. **Opening the WebSocket connection**
-   - When the device needs to start a voice session (wake-up, button press, etc.), it calls `OpenAudioChannel()`:
-     - Reads the WebSocket URL from settings.
-     - Sets the request headers (`Authorization`, `Protocol-Version`, `Device-Id`, `Client-Id`).
-     - Calls `Connect()` to establish the WebSocket connection.
+2. **Mở kết nối WebSocket**
+   - Khi thiết bị cần bắt đầu một phiên thoại giọng nói (thức dậy, nhấn nút, v.v.), nó gọi `OpenAudioChannel()`:
+     - Đọc URL WebSocket từ cài đặt.
+     - Đặt các tiêu đề yêu cầu (`Authorization`, `Protocol-Version`, `Device-Id`, `Client-Id`).
+     - Gọi `Connect()` để thiết lập kết nối WebSocket.
 
-3. **Device sends a "hello" message**
-   - Once connected, the device sends a JSON message. Example:
+3. **Thiết bị gửi tin nhắn "hello"**
+   - Sau khi kết nối, thiết bị gửi một tin nhắn JSON. Ví dụ:
    ```json
    {
      "type": "hello",
@@ -38,13 +38,13 @@ This document describes the WebSocket communication protocol between the device 
      }
    }
    ```
-   - `features` is optional and generated from compile-time configuration. For example, `"mcp": true` means the device supports MCP, and `"aec": true` is emitted when `CONFIG_USE_SERVER_AEC` is enabled.
-   - `frame_duration` matches `OPUS_FRAME_DURATION_MS` (typically 60 ms).
+   - `features` là tùy chọn và được tạo từ cấu hình thời gian biên dịch. Ví dụ, `"mcp": true` có nghĩa là thiết bị hỗ trợ MCP, và `"aec": true` được phát ra khi `CONFIG_USE_SERVER_AEC` được bật.
+   - `frame_duration` khớp với `OPUS_FRAME_DURATION_MS` (thường là 60 ms).
 
-4. **Server replies with "hello"**
-   - The device waits for a JSON message whose `"type"` is `"hello"` and whose `"transport"` is `"websocket"`.
-   - The server may include a `session_id`; the device will store it.
-   - Example:
+4. **Máy chủ trả lời bằng "hello"**
+   - Thiết bị chờ một tin nhắn JSON có `"type"` là `"hello"` và `"transport"` là `"websocket"`.
+   - Máy chủ có thể bao gồm một `session_id`; thiết bị sẽ lưu trữ nó.
+   - Ví dụ:
    ```json
    {
      "type": "hello",
@@ -58,83 +58,83 @@ This document describes the WebSocket communication protocol between the device 
      }
    }
    ```
-   - If `transport` matches, the device marks the audio channel as opened.
-   - If no valid hello arrives within the timeout (default 10 seconds), the connection is considered failed and the network error callback is fired.
+   - Nếu `transport` khớp, thiết bị đánh dấu kênh âm thanh đã mở.
+   - Nếu không có hello hợp lệ nào đến trong thời gian chờ (mặc định 10 giây), kết nối được coi là thất bại và callback lỗi mạng được kích hoạt.
 
-5. **Subsequent exchanges**
-   - Two kinds of data are sent in either direction:
-     1. **Binary audio data** (Opus encoded)
-     2. **Text JSON messages** (chat state, TTS/STT events, MCP messages, etc.)
+5. **Các trao đổi tiếp theo**
+   - Hai loại dữ liệu được gửi theo cả hai hướng:
+     1. **Dữ liệu âm thanh nhị phân** (mã hóa Opus)
+     2. **Tin nhắn JSON văn bản** (trạng thái trò chuyện, sự kiện TTS/STT, tin nhắn MCP, v.v.)
 
-   - In the code, the receive callback splits traffic as follows:
+   - Trong mã, callback nhận sẽ phân tách lưu lượng truy cập như sau:
      - `OnData(...)`:
-       - If `binary` is `true`, the payload is treated as an Opus frame and decoded.
-       - If `binary` is `false`, the payload is parsed as JSON and dispatched by `type`.
+       - Nếu `binary` là `true`, tải trọng được xử lý như một khung Opus và được giải mã.
+       - Nếu `binary` là `false`, tải trọng được phân tích cú pháp dưới dạng JSON và được gửi đi theo `type`.
 
-   - When the server or network drops, `OnDisconnected()` fires:
-     - The device invokes `on_audio_channel_closed_()` and eventually returns to the idle state.
+   - Khi máy chủ hoặc mạng bị ngắt, `OnDisconnected()` được kích hoạt:
+     - Thiết bị gọi `on_audio_channel_closed_()` và cuối cùng quay lại trạng thái nhàn rỗi.
 
-6. **Closing the WebSocket connection**
-   - When the device wants to end the session, it calls `CloseAudioChannel()` to tear down the socket and returns to idle.
-   - The same callback chain runs if the server closes the socket first.
-
----
-
-## 2. Common Request Headers
-
-When establishing the WebSocket connection, the device sets the following headers:
-
-- `Authorization`: access token, usually formatted as `"Bearer <token>"`.
-- `Protocol-Version`: the protocol version number, matching the `version` field in the hello message.
-- `Device-Id`: the physical MAC address of the device.
-- `Client-Id`: a software-generated UUID (reset when NVS is erased or the full firmware is re-flashed).
-
-These headers are sent with the WebSocket handshake; the server can use them for authentication or bookkeeping.
+6. **Đóng kết nối WebSocket**
+   - Khi thiết bị muốn kết thúc phiên, nó gọi `CloseAudioChannel()` để chấm dứt socket và quay lại trạng thái nhàn rỗi.
+   - Chuỗi callback tương tự sẽ chạy nếu máy chủ đóng socket trước.
 
 ---
 
-## 3. Binary Protocol Versions
+## 2. Các Tiêu đề Yêu cầu Chung
 
-The device supports several binary protocol versions, selected by the `version` field in settings:
+Khi thiết lập kết nối WebSocket, thiết bị đặt các tiêu đề sau:
 
-### 3.1 Version 1 (default)
-Raw Opus frames with no extra metadata. The WebSocket layer already distinguishes text and binary frames.
+- `Authorization`: mã truy cập, thường được định dạng là `"Bearer <token>"`.
+- `Protocol-Version`: số phiên bản giao thức, khớp với trường `version` trong tin nhắn hello.
+- `Device-Id`: địa chỉ MAC vật lý của thiết bị.
+- `Client-Id`: UUID được tạo bằng phần mềm (được đặt lại khi NVS bị xóa hoặc firmware đầy đủ được nạp lại).
 
-### 3.2 Version 2
-Uses the `BinaryProtocol2` structure:
+Các tiêu đề này được gửi cùng với bắt tay WebSocket; máy chủ có thể sử dụng chúng để xác thực hoặc ghi sổ.
+
+---
+
+## 3. Các Phiên bản Giao thức Nhị phân
+
+Thiết bị hỗ trợ một số phiên bản giao thức nhị phân, được chọn bằng trường `version` trong cài đặt:
+
+### 3.1 Phiên bản 1 (mặc định)
+Các khung Opus thô không có siêu dữ liệu bổ sung. Lớp WebSocket đã phân biệt văn bản và nhị phân.
+
+### 3.2 Phiên bản 2
+Sử dụng cấu trúc `BinaryProtocol2`:
 ```c
 struct BinaryProtocol2 {
-    uint16_t version;        // protocol version
-    uint16_t type;           // message type (0: OPUS, 1: JSON)
-    uint32_t reserved;       // reserved
-    uint32_t timestamp;      // timestamp in milliseconds (useful for server-side AEC)
-    uint32_t payload_size;   // payload size in bytes
-    uint8_t payload[];       // payload
+    uint16_t version;        // phiên bản giao thức
+    uint16_t type;           // loại tin nhắn (0: OPUS, 1: JSON)
+    uint32_t reserved;       // dành riêng
+    uint32_t timestamp;      // dấu thời gian bằng mili giây (hữu ích cho AEC phía máy chủ)
+    uint32_t payload_size;   // kích thước tải trọng bằng byte
+    uint8_t payload[];       // tải trọng
 } __attribute__((packed));
 ```
 
-### 3.3 Version 3
-Uses the `BinaryProtocol3` structure:
+### 3.3 Phiên bản 3
+Sử dụng cấu trúc `BinaryProtocol3`:
 ```c
 struct BinaryProtocol3 {
-    uint8_t type;            // message type
-    uint8_t reserved;        // reserved
-    uint16_t payload_size;   // payload size
-    uint8_t payload[];       // payload
+    uint8_t type;            // loại tin nhắn
+    uint8_t reserved;        // dành riêng
+    uint16_t payload_size;   // kích thước tải trọng
+    uint8_t payload[];       // tải trọng
 } __attribute__((packed));
 ```
 
 ---
 
-## 4. JSON Message Structure
+## 4. Cấu trúc Tin nhắn JSON
 
-WebSocket text frames carry JSON. The most common `"type"` values and their semantics are listed below. Fields that are not listed may be implementation-specific or optional.
+Các khung văn bản WebSocket mang JSON. Các giá trị `"type"` phổ biến nhất và ngữ nghĩa của chúng được liệt kê dưới đây. Các trường không được liệt kê có thể là cụ thể của việc triển khai hoặc tùy chọn.
 
-### 4.1 Device -> Server
+### 4.1 Thiết bị -> Máy chủ
 
 1. **Hello**
-   - Sent once the connection is established; announces the device parameters.
-   - Example:
+   - Được gửi một lần khi kết nối được thiết lập; thông báo các tham số của thiết bị.
+   - Ví dụ:
      ```json
      {
        "type": "hello",
@@ -154,13 +154,13 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
      ```
 
 2. **Listen**
-   - Tells the server that the device is starting or stopping microphone capture.
-   - Common fields:
-     - `"session_id"`: session identifier.
+   - Cho máy chủ biết rằng thiết bị đang bắt đầu hoặc dừng thu âm thanh.
+   - Các trường phổ biến:
+     - `"session_id"`: định danh phiên.
      - `"type": "listen"`
-     - `"state"`: `"start"`, `"stop"`, or `"detect"` (wake word detected).
-     - `"mode"`: `"auto"`, `"manual"`, or `"realtime"`.
-   - Example (start listening):
+     - `"state"`: `"start"`, `"stop"`, hoặc `"detect"` (phát hiện từ khóa).
+     - `"mode"`: `"auto"`, `"manual"`, hoặc `"realtime"`.
+   - Ví dụ (bắt đầu lắng nghe):
      ```json
      {
        "session_id": "xxx",
@@ -171,8 +171,8 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
      ```
 
 3. **Abort**
-   - Aborts the current TTS playback or the voice channel.
-   - Example:
+   - Hủy bỏ việc phát TTS hiện tại hoặc kênh giọng nói.
+   - Ví dụ:
      ```json
      {
        "session_id": "xxx",
@@ -180,12 +180,12 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
        "reason": "wake_word_detected"
      }
      ```
-   - `reason` may be `"wake_word_detected"` or other implementation-defined values.
+   - `reason` có thể là `"wake_word_detected"` hoặc các giá trị được xác định bởi việc triển khai khác.
 
-4. **Wake Word Detected**
-   - Sent by the device when the local wake word detector fires.
-   - Opus audio containing the wake word may be streamed before this message to let the server run voice-print verification.
-   - Example:
+4. **Phát hiện Từ khóa**
+   - Được gửi bởi thiết bị khi bộ phát hiện từ khóa cục bộ kích hoạt.
+   - Âm thanh Opus chứa từ khóa có thể được truyền phát trước tin nhắn này để cho phép máy chủ chạy xác minh giọng nói.
+   - Ví dụ:
      ```json
      {
        "session_id": "xxx",
@@ -196,8 +196,8 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
      ```
 
 5. **MCP**
-   - The recommended channel for IoT control. Device capability discovery and tool invocation all flow through `type: "mcp"` messages whose `payload` is JSON-RPC 2.0 (see [MCP protocol document](./mcp-protocol.md)).
-   - Device-to-server response example:
+   - Kênh được khuyến nghị cho điều khiển IoT. Khám phá khả năng của thiết bị và gọi công cụ đều được truyền qua các tin nhắn `type: "mcp"` có `payload` là JSON-RPC 2.0 (xem [tài liệu giao thức MCP](./mcp-protocol.md)).
+   - Ví dụ phản hồi từ thiết bị đến máy chủ:
      ```json
      {
        "session_id": "xxx",
@@ -217,31 +217,31 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
 
 ---
 
-### 4.2 Server -> Device
+### 4.2 Máy chủ -> Thiết bị
 
 1. **Hello**
-   - The handshake acknowledgement.
-   - Must include `"type": "hello"` and `"transport": "websocket"`.
-   - May include `audio_params`, meaning the audio parameters the server expects / the canonical set agreed with the device.
-   - May include a `session_id` which the device records.
-   - Once received, the device sets the "audio channel open" event.
+   - Xác nhận bắt tay.
+   - Phải bao gồm `"type": "hello"` và `"transport": "websocket"`.
+   - Có thể bao gồm `audio_params`, nghĩa là các tham số âm thanh mà máy chủ mong đợi / tập hợp chuẩn được thống nhất với thiết bị.
+   - Có thể bao gồm một `session_id` mà thiết bị ghi lại.
+   - Sau khi nhận, thiết bị đặt sự kiện "kênh âm thanh mở".
 
 2. **STT**
    - `{"session_id": "xxx", "type": "stt", "text": "..."}`
-   - The speech-to-text result for the user utterance. Typically shown on the display before moving to the response.
+   - Kết quả chuyển giọng nói thành văn bản cho lời nói của người dùng. Thường được hiển thị trên màn hình trước khi chuyển sang phản hồi.
 
 3. **LLM**
    - `{"session_id": "xxx", "type": "llm", "emotion": "happy", "text": "😀"}`
-   - Tells the device to update the emotion / facial expression on the UI.
+   - Cho thiết bị cập nhật cảm xúc / biểu cảm khuôn mặt trên UI.
 
 4. **TTS**
-   - `{"session_id": "xxx", "type": "tts", "state": "start"}`: the server is about to stream TTS audio. The device transitions to the speaking state.
-   - `{"session_id": "xxx", "type": "tts", "state": "stop"}`: the TTS segment is finished.
-   - `{"session_id": "xxx", "type": "tts", "state": "sentence_start", "text": "..."}`: show the current sentence on the UI (for example, subtitle display).
+   - `{"session_id": "xxx", "type": "tts", "state": "start"}`: máy chủ sắp truyền phát âm thanh TTS. Thiết bị chuyển sang trạng thái nói.
+   - `{"session_id": "xxx", "type": "tts", "state": "stop"}`: phân đoạn TTS đã hoàn thành.
+   - `{"session_id": "xxx", "type": "tts", "state": "sentence_start", "text": "..."}`: hiển thị câu hiện tại trên UI (ví dụ: hiển thị phụ đề).
 
 5. **MCP**
-   - The server sends IoT-related commands or receives tool-call results. The `payload` structure follows JSON-RPC 2.0.
-   - Server-to-device `tools/call` example:
+   - Máy chủ gửi các lệnh liên quan đến IoT hoặc nhận kết quả gọi công cụ. Cấu trúc `payload` tuân theo JSON-RPC 2.0.
+   - Ví dụ `tools/call` từ máy chủ đến thiết bị:
      ```json
      {
        "session_id": "xxx",
@@ -259,8 +259,8 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
      ```
 
 6. **System**
-   - System-level control, often used for remote upgrades / management.
-   - Example:
+   - Điều khiển cấp hệ thống, thường được sử dụng cho nâng cấp / quản lý từ xa.
+   - Ví dụ:
      ```json
      {
        "session_id": "xxx",
@@ -268,12 +268,12 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
        "command": "reboot"
      }
      ```
-   - Supported commands:
-     - `"reboot"`: reboot the device.
+   - Các lệnh được hỗ trợ:
+     - `"reboot"`: khởi động lại thiết bị.
 
 7. **Alert**
-   - Instructs the device to show an alert and play a vibration sound. Handled in `Application::OnIncomingJson`.
-   - Example:
+   - Hướng dẫn thiết bị hiển thị cảnh báo và phát âm thanh rung. Được xử lý trong `Application::OnIncomingJson`.
+   - Ví dụ:
      ```json
      {
        "session_id": "xxx",
@@ -283,14 +283,14 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
        "emotion": "sad"
      }
      ```
-   - Fields:
-     - `status`: short title displayed on screen.
-     - `message`: detailed message.
-     - `emotion`: emotion shown while alerting (e.g. `"sad"`, `"neutral"`).
+   - Các trường:
+     - `status`: tiêu đề ngắn hiển thị trên màn hình.
+     - `message`: tin nhắn chi tiết.
+     - `emotion`: cảm xúc được hiển thị trong khi cảnh báo (ví dụ: `"sad"`, `"neutral"`).
 
-8. **Custom** (optional)
-   - Available when `CONFIG_RECEIVE_CUSTOM_MESSAGE` is enabled.
-   - Example:
+8. **Custom** (tùy chọn)
+   - Có sẵn khi `CONFIG_RECEIVE_CUSTOM_MESSAGE` được bật.
+   - Ví dụ:
      ```json
      {
        "session_id": "xxx",
@@ -301,30 +301,30 @@ WebSocket text frames carry JSON. The most common `"type"` values and their sema
      }
      ```
 
-9. **Binary audio frames**
-   - When the server pushes Opus-encoded audio as binary frames, the device decodes and plays them.
-   - Frames received while the device is in the `listening` state are dropped to avoid conflicts with the microphone stream.
+9. **Các khung âm thanh nhị phân**
+   - Khi máy chủ đẩy âm thanh được mã hóa Opus dưới dạng khung nhị phân, thiết bị sẽ giải mã và phát chúng.
+   - Các khung nhận được trong khi thiết bị ở trạng thái `listening` sẽ bị loại bỏ để tránh xung đột với luồng microphone.
 
 ---
 
-## 5. Audio Codec
+## 5. Bộ Mã hóa Âm thanh
 
-1. **Device uploads microphone audio**
-   - After optional AEC / NR / AGC processing, the audio is Opus-encoded and sent as binary frames.
-   - Depending on the protocol version, the frames may be raw Opus (v1) or wrapped in the metadata structures (v2/v3).
+1. **Thiết bị tải lên âm thanh microphone**
+   - Sau khi xử lý AEC / NR / AGC tùy chọn, âm thanh được mã hóa Opus và gửi dưới dạng khung nhị phân.
+   - Tùy thuộc vào phiên bản giao thức, các khung có thể là Opus thô (v1) hoặc được bọc trong các cấu trúc siêu dữ liệu (v2/v3).
 
-2. **Device plays server audio**
-   - Incoming binary frames are also treated as Opus.
-   - The device decodes and sends them to the audio output.
-   - If the sample rate differs from the device's output, it is resampled after decoding.
+2. **Thiết bị phát âm thanh máy chủ**
+   - Các khung nhị phân đến cũng được xử lý như Opus.
+   - Thiết bị giải mã và gửi chúng đến đầu ra âm thanh.
+   - Nếu tốc độ mẫu khác với đầu ra của thiết bị, nó sẽ được lấy mẫu lại sau khi giải mã.
 
 ---
 
-## 6. Device States
+## 6. Trạng thái Thiết bị
 
-### 6.1 Main states
+### 6.1 Các trạng thái chính
 
-The device state machine is defined in [`main/device_state.h`](../main/device_state.h) and includes:
+Máy trạng thái thiết bị được định nghĩa trong [`main/device_state.h`](../main/device_state.h) và bao gồm:
 
 - `kDeviceStateUnknown`
 - `kDeviceStateStarting`
@@ -335,27 +335,27 @@ The device state machine is defined in [`main/device_state.h`](../main/device_st
 - `kDeviceStateSpeaking`
 - `kDeviceStateUpgrading`
 - `kDeviceStateActivating`
-- `kDeviceStateAudioTesting`    (factory / bring-up audio testing)
-- `kDeviceStateFatalError`      (non-recoverable error requiring user action)
+- `kDeviceStateAudioTesting` (kiểm tra âm thanh nhà máy / khởi động)
+- `kDeviceStateFatalError` (lỗi không thể phục hồi yêu cầu hành động của người dùng)
 
-### 6.2 Typical transitions
+### 6.2 Các chuyển đổi điển hình
 
 1. **Idle -> Connecting**
-   - Triggered by wake word or button press. The device calls `OpenAudioChannel()`, sets up the WebSocket, and sends `"type":"hello"`.
+   - Được kích hoạt bởi từ khóa hoặc nhấn nút. Thiết bị gọi `OpenAudioChannel()`, thiết lập WebSocket và gửi `"type":"hello"`.
 
 2. **Connecting -> Listening**
-   - Once connected, `SendStartListening(...)` is called and microphone streaming begins.
+   - Sau khi kết nối, `SendStartListening(...)` được gọi và bắt đầu truyền phát microphone.
 
 3. **Listening -> Speaking**
-   - Server sends `{"type":"tts","state":"start"}`; the device stops sending mic audio and plays incoming TTS.
+   - Máy chủ gửi `{"type":"tts","state":"start"}`; thiết bị ngừng gửi âm thanh mic và phát TTS đến.
 
 4. **Speaking -> Idle**
-   - Server sends `{"type":"tts","state":"stop"}`. When auto-continue is enabled the device transitions back to Listening; otherwise it returns to Idle.
+   - Máy chủ gửi `{"type":"tts","state":"stop"}`. Khi tự động tiếp tục được bật, thiết bị chuyển trở lại Listening; nếu không, nó quay lại Idle.
 
-5. **Listening / Speaking -> Idle** (abort)
-   - `SendAbortSpeaking(...)` or `CloseAudioChannel()` interrupts the session and closes the WebSocket.
+5. **Listening / Speaking -> Idle** (hủy bỏ)
+   - `SendAbortSpeaking(...)` hoặc `CloseAudioChannel()` ngắt phiên và đóng WebSocket.
 
-### 6.3 Auto-mode state diagram
+### 6.3 Sơ đồ trạng thái Chế độ Tự động
 
 ```mermaid
 stateDiagram
@@ -377,7 +377,7 @@ stateDiagram
   kDeviceStateStarting --> kDeviceStateFatalError: Fatal error
 ```
 
-### 6.4 Manual-mode state diagram
+### 6.4 Sơ đồ trạng thái Chế độ Thủ công
 
 ```mermaid
 stateDiagram
@@ -399,52 +399,52 @@ stateDiagram
 
 ---
 
-## 7. Error Handling
+## 7. Xử lý Lỗi
 
-1. **Connection failure**
-   - If `Connect(url)` fails or the server hello is not received before the timeout, `on_network_error_()` is invoked and the device shows a "cannot connect" alert.
+1. **Lỗi kết nối**
+   - Nếu `Connect(url)` thất bại hoặc máy chủ hello không được nhận trước thời gian chờ, `on_network_error_()` được gọi và thiết bị hiển thị cảnh báo "không thể kết nối".
 
-2. **Server disconnect**
-   - If the WebSocket drops unexpectedly, `OnDisconnected()` is called:
-     - `on_audio_channel_closed_()` runs.
-     - The device returns to Idle (or retries, depending on policy).
-
----
-
-## 8. Other Notes
-
-1. **Authentication**
-   - The device supplies `Authorization: Bearer <token>`; the server must validate it.
-   - If the token is missing or invalid the server may reject the handshake or terminate the session later.
-
-2. **Session scope**
-   - Many messages carry a `session_id`, useful when the server serves multiple concurrent interactions.
-
-3. **Audio payload**
-   - Default audio format is Opus at 16 kHz, mono. The frame duration is controlled by `OPUS_FRAME_DURATION_MS` (typically 60 ms). The server may use 24 kHz on the downlink for better music playback.
-
-4. **Binary protocol version selection**
-   - Configured through the `version` setting:
-     - v1: raw Opus
-     - v2: metadata + timestamp (useful for server-side AEC)
-     - v3: lightweight header
-   - The value is echoed back in the `Protocol-Version` header and the hello message.
-
-5. **IoT control via MCP**
-   - All IoT capability discovery and control flows through MCP (`type: "mcp"`). The legacy `type: "iot"` protocol is deprecated.
-   - MCP works over both WebSocket and MQTT, giving better standardization and extensibility.
-   - See [MCP protocol document](./mcp-protocol.md) and [MCP IoT control usage](./mcp-usage.md) for details.
-
-6. **Malformed JSON**
-   - When a required field such as `type` is missing, the device logs `ESP_LOGE(TAG, "Missing message type, data: %s", data);` and ignores the message.
+2. **Ngắt kết nối máy chủ**
+   - Nếu WebSocket bị ngắt đột ngột, `OnDisconnected()` được gọi:
+     - `on_audio_channel_closed_()` chạy.
+     - Thiết bị quay lại Idle (hoặc thử lại, tùy thuộc vào chính sách).
 
 ---
 
-## 9. Example Message Flow
+## 8. Các Lưu ý Khác
 
-A simplified two-way exchange:
+1. **Xác thực**
+   - Thiết bị cung cấp `Authorization: Bearer <token>`; máy chủ phải xác thực nó.
+   - Nếu token bị thiếu hoặc không hợp lệ, máy chủ có thể từ chối bắt tay hoặc chấm dứt phiên sau này.
 
-1. **Device -> Server** (handshake)
+2. **Phạm vi phiên**
+   - Nhiều tin nhắn mang `session_id`, hữu ích khi máy chủ phục vụ nhiều tương tác đồng thời.
+
+3. **Tải trọng âm thanh**
+   - Định dạng âm thanh mặc định là Opus ở 16 kHz, đơn kênh. Thời lượng khung được kiểm soát bởi `OPUS_FRAME_DURATION_MS` (thường là 60 ms). Máy chủ có thể sử dụng 24 kHz ở đường xuống để phát nhạc tốt hơn.
+
+4. **Lựa chọn phiên bản giao thức nhị phân**
+   - Được cấu hình thông qua cài đặt `version`:
+     - v1: Opus thô
+     - v2: siêu dữ liệu + dấu thời gian (hữu ích cho AEC phía máy chủ)
+     - v3: tiêu đề nhẹ
+   - Giá trị được phản hồi lại trong tiêu đề `Protocol-Version` và tin nhắn hello.
+
+5. **Điều khiển IoT qua MCP**
+   - Tất cả khám phá khả năng và điều khiển IoT đều thông qua MCP (`type: "mcp"`). Giao thức `type: "iot"` cũ đã bị loại bỏ.
+   - MCP hoạt động qua cả WebSocket và MQTT, mang lại tiêu chuẩn hóa và khả năng mở rộng tốt hơn.
+   - Xem [tài liệu giao thức MCP](./mcp-protocol.md) và [sử dụng điều khiển IoT MCP](./mcp-usage.md) để biết chi tiết.
+
+6. **JSON bị lỗi**
+   - Khi một trường bắt buộc như `type` bị thiếu, thiết bị ghi nhật ký `ESP_LOGE(TAG, "Missing message type, data: %s", data);` và bỏ qua tin nhắn.
+
+---
+
+## 9. Ví dụ Luồng Tin nhắn
+
+Một trao đổi hai chiều đơn giản hóa:
+
+1. **Thiết bị -> Máy chủ** (bắt tay)
    ```json
    {
      "type": "hello",
@@ -463,7 +463,7 @@ A simplified two-way exchange:
    }
    ```
 
-2. **Server -> Device** (handshake ack)
+2. **Máy chủ -> Thiết bị** (xác nhận bắt tay)
    ```json
    {
      "type": "hello",
@@ -476,7 +476,7 @@ A simplified two-way exchange:
    }
    ```
 
-3. **Device -> Server** (start listening)
+3. **Thiết bị -> Máy chủ** (bắt đầu lắng nghe)
    ```json
    {
      "session_id": "xxx",
@@ -485,9 +485,9 @@ A simplified two-way exchange:
      "mode": "auto"
    }
    ```
-   The device begins streaming binary Opus frames.
+   Thiết bị bắt đầu truyền phát các khung Opus nhị phân.
 
-4. **Server -> Device** (ASR result)
+4. **Máy chủ -> Thiết bị** (kết quả ASR)
    ```json
    {
      "session_id": "xxx",
@@ -496,7 +496,7 @@ A simplified two-way exchange:
    }
    ```
 
-5. **Server -> Device** (TTS start)
+5. **Máy chủ -> Thiết bị** (bắt đầu TTS)
    ```json
    {
      "session_id": "xxx",
@@ -504,9 +504,9 @@ A simplified two-way exchange:
      "state": "start"
    }
    ```
-   The server follows up with binary Opus frames for the device to play.
+   Máy chủ tiếp tục bằng các khung Opus nhị phân để thiết bị phát.
 
-6. **Server -> Device** (TTS stop)
+6. **Máy chủ -> Thiết bị** (dừng TTS)
    ```json
    {
      "session_id": "xxx",
@@ -514,17 +514,17 @@ A simplified two-way exchange:
      "state": "stop"
    }
    ```
-   The device stops playback and, if no further instructions arrive, returns to idle.
+   Thiết bị dừng phát và, nếu không có hướng dẫn nào khác đến, sẽ quay lại trạng thái nhàn rỗi.
 
 ---
 
-## 10. Summary
+## 10. Tóm tắt
 
-This protocol carries JSON text and binary Opus frames over a WebSocket connection to implement audio streaming, TTS playback, speech recognition, device state management, MCP dispatch, and more. Key traits:
+Giao thức này truyền văn bản JSON và các khung Opus nhị phân qua kết nối WebSocket để triển khai truyền phát âm thanh, phát TTS, nhận dạng giọng nói, quản lý trạng thái thiết bị, gửi MCP, và nhiều hơn nữa. Các đặc điểm chính:
 
-- **Handshake**: send `"type":"hello"` and wait for the server reply.
-- **Audio channel**: bidirectional Opus streaming, with three binary framing variants.
-- **JSON messages**: dispatched by `"type"` (TTS, STT, MCP, WakeWord, System, Alert, Custom, ...).
-- **Extensibility**: extra fields in JSON, additional headers for authentication.
+- **Bắt tay**: gửi `"type":"hello"` và chờ phản hồi từ máy chủ.
+- **Kênh âm thanh**: truyền phát Opus hai chiều, với ba biến thể đóng khung nhị phân.
+- **Tin nhắn JSON**: được gửi đi theo `"type"` (TTS, STT, MCP, WakeWord, System, Alert, Custom, ...).
+- **Khả năng mở rộng**: các trường bổ sung trong JSON, các tiêu đề bổ sung để xác thực.
 
-Server and device must agree on the meaning, timing, and error handling of each message type so the session runs smoothly. The text above provides the baseline for integration, debugging, and extension.
+Máy chủ và thiết bị phải thống nhất về ý nghĩa, thời gian và xử lý lỗi của từng loại tin nhắn để phiên chạy trơn tru. Văn bản trên cung cấp cơ sở để tích hợp, gỡ lỗi và mở rộng.

@@ -23,17 +23,17 @@ Board::Board() {
 }
 
 std::string Board::GenerateUuid() {
-    // UUID v4 需要 16 字节的随机数据
+    // UUID v4 cần dữ liệu ngẫu nhiên 16 byte
     uint8_t uuid[16];
     
-    // 使用 ESP32 的硬件随机数生成器
+    // Dùng bộ sinh số ngẫu nhiên phần cứng của ESP32
     esp_fill_random(uuid, sizeof(uuid));
     
-    // 设置版本 (版本 4) 和变体位
-    uuid[6] = (uuid[6] & 0x0F) | 0x40;    // 版本 4
-    uuid[8] = (uuid[8] & 0x3F) | 0x80;    // 变体 1
+    // Thiết lập bit phiên bản (version 4) và biến thể
+    uuid[6] = (uuid[6] & 0x0F) | 0x40;    // Phiên bản 4
+    uuid[8] = (uuid[8] & 0x3F) | 0x80;    // Biến thể 1
     
-    // 将字节转换为标准的 UUID 字符串格式
+    // Chuyển các byte sang định dạng chuỗi UUID chuẩn
     char uuid_str[37];
     snprintf(uuid_str, sizeof(uuid_str),
         "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
@@ -155,7 +155,7 @@ std::string Board::GetSystemInfoJson() {
     json += R"("label":")" + std::string(ota_partition->label) + R"(")";
     json += R"(},)";
 
-    // Append display info
+    // Thêm thông tin hiển thị
     auto display = GetDisplay();
     if (display) {
         json += R"("display":{)";
@@ -166,13 +166,13 @@ std::string Board::GetSystemInfoJson() {
         }
         json += R"("width":)" + std::to_string(display->width()) + R"(,)";
         json += R"("height":)" + std::to_string(display->height()) + R"(,)";
-        json.pop_back(); // Remove the last comma
+        json.pop_back(); // Xóa dấu phẩy cuối cùng
     }
     json += R"(},)";
 
     json += R"("board":)" + GetBoardJson();
 
-    // Close the JSON object
+    // Đóng đối tượng JSON
     json += R"(})";
     return json;
 }

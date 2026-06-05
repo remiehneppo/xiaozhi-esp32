@@ -1,21 +1,21 @@
 # ESP-Spot
 
-## 简介
+## Giới thiệu
 
 <div align="center">
-    <a href="https://oshwhub.com/esp-college/esp-spot"><b> 立创开源平台 </b></a>
+    <a href="https://oshwhub.com/esp-college/esp-spot"><b> Nền tảng mã nguồn mở Lichuang </b></a>
     |
     <a href="https://www.bilibili.com/video/BV1ekRAYVEZ1/"><b> Bilibili Demo </b></a>
 </div>
 
-ESP-Spot 是 ESP Friends 开源的一款智能语音交互盒子，内置麦克风、扬声器、IMU 惯性传感器，可使用电池供电。ESP-Spot 不带屏幕，带有一个 RGB 指示灯和两个按钮。硬件详情可查看[立创开源项目](https://oshwhub.com/esp-college/esp-spot)。
+ESP-Spot là một hộp tương tác giọng nói thông minh mã nguồn mở của ESP Friends, tích hợp micro, loa và cảm biến quán tính IMU, có thể dùng pin để cấp nguồn. ESP-Spot không có màn hình, nhưng có một đèn báo RGB và hai nút bấm. Chi tiết phần cứng xem tại [dự án mã nguồn mở trên Lichuang](https://oshwhub.com/esp-college/esp-spot).
 
-ESP-Spot 开源项目采用 ESP32-S3-WROOM-1-N16R8 模组或 ESP32-C5-WROOM-1-N8R8。如在复刻时使用了其他大小的 Flash，需修改对应的参数。
+Phiên bản mã nguồn mở của ESP-Spot dùng mô-đun ESP32-S3-WROOM-1-N16R8 hoặc ESP32-C5-WROOM-1-N8R8. Nếu khi làm lại phần cứng bạn dùng dung lượng flash khác, cần chỉnh lại các tham số tương ứng.
 
 
-## 配置、编译命令
+## Lệnh cấu hình và biên dịch
 
-**配置编译目标**
+**Thiết lập mục tiêu biên dịch**
 
 ```bash
 idf.py set-target esp32s3 # Spot S3
@@ -23,25 +23,25 @@ idf.py set-target esp32s3 # Spot S3
 idf.py set-target esp32c5 # Spot C5
 ```
 
-**打开 menuconfig 并配置**
+**Mở menuconfig và cấu hình**
 
 ```bash
 idf.py menuconfig
 ```
 
-分别配置如下选项：
+Thiết lập tùy chọn sau:
 
-- `Xiaozhi Assistant` → `Board Type` → 选择 `ESP-Spot-S3` / `ESP-Spot-C5`
+- `Xiaozhi Assistant` → `Board Type` → chọn `ESP-Spot-S3` / `ESP-Spot-C5`
 
-按 `S` 保存，按 `Q` 退出。
+Nhấn `S` để lưu, nhấn `Q` để thoát.
 
-**编译**
+**Biên dịch**
 
 ```bash
 idf.py build
 ```
 
-**烧录**
+**Nạp firmware**
 
 ```bash
 idf.py flash
@@ -49,15 +49,15 @@ idf.py flash
 
 > [!TIP]
 >
-> **若电脑始终无法找到 ESP-Spot 串口，可尝试如下步骤**
-> 1. 打开前盖；
-> 2. 拔出带有模组的 PCB 板；
-> 3. 按住 <kbd>BOOT</kbd> 同时插回 PCB 版，注意不要颠倒；
+> **Nếu máy tính luôn không tìm thấy cổng nối tiếp của ESP-Spot, hãy thử các bước sau**
+> 1. Mở nắp trước;
+> 2. Rút bo PCB có gắn mô-đun ra;
+> 3. Giữ <kbd>BOOT</kbd> rồi cắm lại bo PCB, chú ý không lắp ngược;
 > 
-> 此时， ESP-Spot 应当已进入下载模式。在烧录完成后，可能需要重新插拔 PCB 板。
+> Lúc này ESP-Spot phải đã vào chế độ tải xuống. Sau khi nạp xong, có thể cần cắm lại bo PCB một lần nữa.
 
-## 低功耗
+## Nguồn thấp
 
-ESP-Spot 支持 Deep Sleep 低功耗模式。
+ESP-Spot hỗ trợ chế độ tiết kiệm điện Deep Sleep.
 
-当处于 idle 状态 10 分钟后，ESP-Spot 会自动进入 Deep Sleep 模式，按 Key 键或摇晃 ESP-Spot 即可唤醒。
+Sau khi ở trạng thái idle 10 phút, ESP-Spot sẽ tự động vào Deep Sleep; nhấn nút Key hoặc lắc ESP-Spot để đánh thức.

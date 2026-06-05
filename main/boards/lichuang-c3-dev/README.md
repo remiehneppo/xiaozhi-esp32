@@ -1,11 +1,6 @@
-## 立创·实战派ESP32-C3开发板
+## Bo phát triển ESP32-C3 Lịch Chuang · Thực chiến
 
-1、开发板资料：https://wiki.lckfb.com/zh-hans/szpi-esp32c3
+1、Tài liệu bo mạch: https://wiki.lckfb.com/zh-hans/szpi-esp32c3
 
-2、该开发板 flash 大小为 8MB，编译时注意选择合适的分区表：
+2、Bo mạch này có kích thước flash là 8MB, khi biên dịch hãy chú ý chọn bảng phân vùng phù hợp:
 
-```
-Partition Table  --->
-  Partition Table (Custom partition table CSV)  --->
-  (partitions/v2/8m.csv) Custom partition CSV file
-```

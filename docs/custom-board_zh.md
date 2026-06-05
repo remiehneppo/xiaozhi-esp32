@@ -1,44 +1,44 @@
-# 自定义开发板指南
+# Hướng dẫn board tùy chỉnh
 
-本指南介绍如何为小智AI语音聊天机器人项目定制一个新的开发板初始化程序。小智AI支持70多种ESP32系列开发板，每个开发板的初始化代码都放在对应的目录下。
+Tài liệu này mô tả cách tùy biến một bộ khởi tạo board mới cho dự án chatbot giọng nói XiaoZhi AI. XiaoZhi AI hỗ trợ hơn 70 loại board ESP32, và mã khởi tạo của từng board nằm trong thư mục tương ứng.
 
-## 重要提示
+## Lưu ý quan trọng
 
-> **警告**: 对于自定义开发板，当IO配置与原有开发板不同时，切勿直接覆盖原有开发板的配置编译固件。必须创建新的开发板类型，或者通过config.json文件中的builds配置不同的name和sdkconfig宏定义来区分。使用 `python scripts/release.py [开发板目录名字]` 来编译打包固件。
+> **Cảnh báo**: Với board tùy chỉnh, nếu cấu hình IO khác với board gốc thì tuyệt đối không được dùng cấu hình của board gốc để build và ghi đè firmware. Phải tạo một loại board mới, hoặc tách biệt bằng các `name` và macro `sdkconfig` khác nhau trong phần `builds` của file `config.json`. Dùng `python scripts/release.py [tên thư mục board]` để build và đóng gói firmware.
 >
-> 如果直接覆盖原有配置，将来OTA升级时，您的自定义固件可能会被原有开发板的标准固件覆盖，导致您的设备无法正常工作。每个开发板有唯一的标识和对应的固件升级通道，保持开发板标识的唯一性非常重要。
+> Nếu ghi đè trực tiếp cấu hình gốc, khi OTA nâng cấp sau này firmware tùy biến của bạn có thể bị firmware chuẩn của board gốc thay thế, khiến thiết bị không hoạt động bình thường. Mỗi board có mã định danh riêng và kênh nâng cấp firmware riêng, nên việc giữ ID của board là rất quan trọng.
 
-## 目录结构
+## Cấu trúc thư mục
 
-每个开发板的目录结构通常包含以下文件：
+Mỗi board thường có các file sau:
 
-- `xxx_board.cc` - 主要的板级初始化代码，实现了板子相关的初始化和功能
-- `config.h` - 板级配置文件，定义了硬件管脚映射和其他配置项
-- `config.json` - 编译配置，指定目标芯片和特殊的编译选项
-- `README.md` - 开发板相关的说明文档
+- `xxx_board.cc` - mã khởi tạo board chính, chứa toàn bộ logic khởi tạo và chức năng của board
+- `config.h` - file cấu hình board, định nghĩa ánh xạ chân và các cấu hình phần cứng khác
+- `config.json` - cấu hình build, chỉ định chip đích và các tùy chọn build đặc biệt
+- `README.md` - tài liệu mô tả dành riêng cho board đó
 
-## 定制开发板步骤
+## Các bước tùy biến board
 
-### 1. 创建新的开发板目录
+### 1. Tạo thư mục board mới
 
-首先在`boards/`目录下创建一个新的目录，命名方式应使用 `[品牌名]-[开发板类型]` 的形式，例如 `m5stack-tab5`：
+Trước hết hãy tạo một thư mục mới dưới `boards/`, đặt tên theo dạng `[tên thương hiệu]-[loại board]`, ví dụ `m5stack-tab5`:
 
 ```bash
 mkdir main/boards/my-custom-board
 ```
 
-### 2. 创建配置文件
+### 2. Tạo file cấu hình
 
 #### config.h
 
-在`config.h`中定义所有的硬件配置，包括:
+Trong `config.h`, định nghĩa toàn bộ cấu hình phần cứng, gồm:
 
-- 音频采样率和I2S引脚配置
-- 音频编解码芯片地址和I2C引脚配置
-- 按钮和LED引脚配置
-- 显示屏参数和引脚配置
+- Tần số lấy mẫu âm thanh và cấu hình chân I2S
+- Địa chỉ chip codec âm thanh và cấu hình chân I2C
+- Cấu hình chân nút bấm và LED
+- Thông số màn hình và cấu hình chân
 
-参考示例（来自lichuang-c3-dev）：
+Ví dụ tham khảo (lấy từ `lichuang-c3-dev`):
 
 ```c
 #ifndef _BOARD_CONFIG_H_
@@ -46,7 +46,7 @@ mkdir main/boards/my-custom-board
 
 #include <driver/gpio.h>
 
-// 音频配置
+// Cấu hình âm thanh
 #define AUDIO_INPUT_SAMPLE_RATE  24000
 #define AUDIO_OUTPUT_SAMPLE_RATE 24000
 
@@ -61,10 +61,10 @@ mkdir main/boards/my-custom-board
 #define AUDIO_CODEC_I2C_SCL_PIN  GPIO_NUM_1
 #define AUDIO_CODEC_ES8311_ADDR  ES8311_CODEC_DEFAULT_ADDR
 
-// 按钮配置
+// Cấu hình nút bấm
 #define BOOT_BUTTON_GPIO        GPIO_NUM_9
 
-// 显示屏配置
+// Cấu hình màn hình
 #define DISPLAY_SPI_SCK_PIN     GPIO_NUM_3
 #define DISPLAY_SPI_MOSI_PIN    GPIO_NUM_5
 #define DISPLAY_DC_PIN          GPIO_NUM_6
@@ -87,18 +87,18 @@ mkdir main/boards/my-custom-board
 
 #### config.json
 
-在`config.json`中定义编译配置，这个文件用于 `scripts/release.py` 脚本自动化编译：
+Trong `config.json`, định nghĩa cấu hình build. File này được script `scripts/release.py` dùng để tự động build:
 
 ```json
 {
-    "target": "esp32s3",  // 目标芯片型号: esp32, esp32s3, esp32c3, esp32c6, esp32p4等
+    "target": "esp32s3",  // Loại chip đích: esp32, esp32s3, esp32c3, esp32c6, esp32p4, v.v.
     "builds": [
         {
-            "name": "my-custom-board",  // 开发板名称，用于生成固件包
+            "name": "my-custom-board",  // Tên board, dùng để tạo gói firmware
             "sdkconfig_append": [
-                // 特别 Flash 大小配置
+                // Cấu hình kích thước Flash đặc biệt
                 "CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y",
-                // 特别分区表配置
+                // Cấu hình bảng phân vùng đặc biệt
                 "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""
             ]
         }
@@ -106,42 +106,42 @@ mkdir main/boards/my-custom-board
 }
 ```
 
-**配置项说明：**
-- `target`: 目标芯片型号，必须与硬件匹配
-- `name`: 编译输出的固件包名称，建议与目录名一致
-- `sdkconfig_append`: 额外的 sdkconfig 配置项数组，会追加到默认配置中
+**Giải thích cấu hình:**
+- `target`: loại chip đích, phải khớp với phần cứng
+- `name`: tên gói firmware đầu ra, nên trùng với tên thư mục
+- `sdkconfig_append`: mảng các tùy chọn `sdkconfig` bổ sung, sẽ được nối vào cấu hình mặc định
 
-**常用的 sdkconfig_append 配置：**
+**Các cấu hình `sdkconfig_append` hay dùng:**
 ```json
-// Flash 大小
-"CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y"   // 4MB Flash
-"CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y"   // 8MB Flash
-"CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y"  // 16MB Flash
+// Kích thước Flash
+"CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y"   // Flash 4MB
+"CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y"   // Flash 8MB
+"CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y"  // Flash 16MB
 
-// 分区表
-"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/4m.csv\""  // 4MB 分区表
-"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""  // 8MB 分区表
-"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/16m.csv\"" // 16MB 分区表
+// Bảng phân vùng
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/4m.csv\""  // Bảng phân vùng 4MB
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""  // Bảng phân vùng 8MB
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/16m.csv\"" // Bảng phân vùng 16MB
 
-// 语言配置
-"CONFIG_LANGUAGE_EN_US=y"  // 英语
-"CONFIG_LANGUAGE_ZH_CN=y"  // 简体中文
+// Cấu hình ngôn ngữ
+"CONFIG_LANGUAGE_EN_US=y"  // Tiếng Anh
+"CONFIG_LANGUAGE_ZH_CN=y"  // Tiếng Trung giản thể
 
-// 唤醒词配置
-"CONFIG_USE_DEVICE_AEC=y"          // 启用设备端 AEC
-"CONFIG_WAKE_WORD_DISABLED=y"      // 禁用唤醒词
+// Cấu hình từ đánh thức
+"CONFIG_USE_DEVICE_AEC=y"          // Bật AEC ở thiết bị
+"CONFIG_WAKE_WORD_DISABLED=y"      // Tắt từ đánh thức
 ```
 
-### 3. 编写板级初始化代码
+### 3. Viết mã khởi tạo board
 
-创建一个`my_custom_board.cc`文件，实现开发板的所有初始化逻辑。
+Tạo file `my_custom_board.cc` để triển khai toàn bộ logic khởi tạo của board.
 
-一个基本的开发板类定义包含以下几个部分：
+Một lớp board cơ bản thường gồm các phần sau:
 
-1. **类定义**：继承自`WifiBoard`或`Ml307Board`
-2. **初始化函数**：包括I2C、显示屏、按钮、IoT等组件的初始化
-3. **虚函数重写**：如`GetAudioCodec()`、`GetDisplay()`、`GetBacklight()`等
-4. **注册开发板**：使用`DECLARE_BOARD`宏注册开发板
+1. **Khai báo lớp**: kế thừa từ `WifiBoard` hoặc `Ml307Board`
+2. **Hàm khởi tạo**: gồm khởi tạo I2C, màn hình, nút bấm, IoT, v.v.
+3. **Ghi đè hàm ảo**: như `GetAudioCodec()`, `GetDisplay()`, `GetBacklight()`, v.v.
+4. **Đăng ký board**: dùng macro `DECLARE_BOARD`
 
 ```cpp
 #include "wifi_board.h"
@@ -164,7 +164,7 @@ private:
     Button boot_button_;
     LcdDisplay* display_;
 
-    // I2C初始化
+    // Khởi tạo I2C
     void InitializeI2c() {
         i2c_master_bus_config_t i2c_bus_cfg = {
             .i2c_port = I2C_NUM_0,
@@ -181,7 +181,7 @@ private:
         ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_cfg, &codec_i2c_bus_));
     }
 
-    // SPI初始化（用于显示屏）
+    // Khởi tạo SPI (dùng cho màn hình)
     void InitializeSpi() {
         spi_bus_config_t buscfg = {};
         buscfg.mosi_io_num = DISPLAY_SPI_MOSI_PIN;
@@ -193,7 +193,7 @@ private:
         ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO));
     }
 
-    // 按钮初始化
+    // Khởi tạo nút bấm
     void InitializeButtons() {
         boot_button_.OnClick([this]() {
             auto& app = Application::GetInstance();
@@ -205,7 +205,7 @@ private:
         });
     }
 
-    // 显示屏初始化（以ST7789为例）
+    // Khởi tạo màn hình (ví dụ dùng ST7789)
     void InitializeDisplay() {
         esp_lcd_panel_io_handle_t panel_io = nullptr;
         esp_lcd_panel_handle_t panel = nullptr;
@@ -232,20 +232,20 @@ private:
         esp_lcd_panel_swap_xy(panel, DISPLAY_SWAP_XY);
         esp_lcd_panel_mirror(panel, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y);
         
-        // 创建显示屏对象
+        // Tạo đối tượng màn hình
         display_ = new SpiLcdDisplay(panel_io, panel,
                                     DISPLAY_WIDTH, DISPLAY_HEIGHT, 
                                     DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, 
                                     DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
 
-    // MCP Tools 初始化
+    // Khởi tạo MCP tools
     void InitializeTools() {
-        // 参考 MCP 文档
+        // Tham khảo tài liệu MCP
     }
 
 public:
-    // 构造函数
+    // Hàm tạo
     MyCustomBoard() : boot_button_(BOOT_BUTTON_GPIO) {
         InitializeI2c();
         InitializeSpi();
@@ -255,7 +255,7 @@ public:
         GetBacklight()->SetBrightness(100);
     }
 
-    // 获取音频编解码器
+    // Lấy codec âm thanh
     virtual AudioCodec* GetAudioCodec() override {
         static Es8311AudioCodec audio_codec(
             codec_i2c_bus_, 
@@ -272,182 +272,181 @@ public:
         return &audio_codec;
     }
 
-    // 获取显示屏
+    // Lấy màn hình
     virtual Display* GetDisplay() override {
         return display_;
     }
     
-    // 获取背光控制
+    // Lấy điều khiển đèn nền
     virtual Backlight* GetBacklight() override {
         static PwmBacklight backlight(DISPLAY_BACKLIGHT_PIN, DISPLAY_BACKLIGHT_OUTPUT_INVERT);
         return &backlight;
     }
 };
 
-// 注册开发板
+// Đăng ký board
 DECLARE_BOARD(MyCustomBoard);
 ```
 
-### 4. 添加构建系统配置
+### 4. Thêm cấu hình hệ thống build
 
-#### 在 Kconfig.projbuild 中添加开发板选项
+#### Thêm lựa chọn board trong `Kconfig.projbuild`
 
-打开 `main/Kconfig.projbuild` 文件，在 `choice BOARD_TYPE` 部分添加新的开发板配置项：
+Mở file `main/Kconfig.projbuild`, rồi thêm lựa chọn board mới trong phần `choice BOARD_TYPE`:
 
 ```kconfig
 choice BOARD_TYPE
     prompt "Board Type"
     default BOARD_TYPE_BREAD_COMPACT_WIFI
     help
-        Board type. 开发板类型
+        Board type. Loại board
     
-    # ... 其他开发板选项 ...
+    # ... các lựa chọn board khác ...
     
     config BOARD_TYPE_MY_CUSTOM_BOARD
-        bool "My Custom Board (我的自定义开发板)"
-        depends on IDF_TARGET_ESP32S3  # 根据你的目标芯片修改
+        bool "My Custom Board (Board tùy chỉnh của tôi)"
+        depends on IDF_TARGET_ESP32S3  # sửa theo chip đích của bạn
 endchoice
 ```
 
-**注意事项：**
-- `BOARD_TYPE_MY_CUSTOM_BOARD` 是配置项名称，需要全大写，使用下划线分隔
-- `depends on` 指定了目标芯片类型（如 `IDF_TARGET_ESP32S3`、`IDF_TARGET_ESP32C3` 等）
-- 描述文字可以使用中英文
+**Lưu ý:**
+- `BOARD_TYPE_MY_CUSTOM_BOARD` là tên cấu hình, cần viết hoa toàn bộ và ngăn cách bằng dấu gạch dưới
+- `depends on` chỉ định loại chip đích (như `IDF_TARGET_ESP32S3`, `IDF_TARGET_ESP32C3`, v.v.)
+- Phần mô tả có thể viết bằng cả tiếng Anh và tiếng Việt
 
-#### 在 CMakeLists.txt 中添加开发板配置
+#### Thêm cấu hình board trong `CMakeLists.txt`
 
-打开 `main/CMakeLists.txt` 文件，在开发板类型判断部分添加新的配置：
+Mở file `main/CMakeLists.txt`, rồi thêm cấu hình mới vào chuỗi điều kiện chọn board:
 
 ```cmake
-# 在 elseif 链中添加你的开发板配置
+# Thêm cấu hình board của bạn vào chuỗi elseif
 elseif(CONFIG_BOARD_TYPE_MY_CUSTOM_BOARD)
-    set(BOARD_TYPE "my-custom-board")  # 与目录名一致
-    set(BUILTIN_TEXT_FONT font_puhui_basic_20_4)  # 根据屏幕大小选择合适的字体
+    set(BOARD_TYPE "my-custom-board")  # phải khớp với tên thư mục
+    set(BUILTIN_TEXT_FONT font_puhui_basic_20_4)  # chọn font phù hợp với kích thước màn hình
     set(BUILTIN_ICON_FONT font_awesome_20_4)
-    set(DEFAULT_EMOJI_COLLECTION twemoji_64)  # 可选，如果需要表情显示
+    set(DEFAULT_EMOJI_COLLECTION twemoji_64)  # tùy chọn, nếu cần hiển thị biểu cảm
 endif()
 ```
 
-**字体和表情配置说明：**
+**Giải thích cấu hình font và emoji:**
 
-根据屏幕分辨率选择合适的字体大小：
-- 小屏幕（128x64 OLED）：`font_puhui_basic_14_1` / `font_awesome_14_1`
-- 中小屏幕（240x240）：`font_puhui_basic_16_4` / `font_awesome_16_4`
-- 中等屏幕（240x320）：`font_puhui_basic_20_4` / `font_awesome_20_4`
-- 大屏幕（480x320+）：`font_puhui_basic_30_4` / `font_awesome_30_4`
+Chọn cỡ font phù hợp theo độ phân giải màn hình:
+- Màn hình nhỏ (128x64 OLED): `font_puhui_basic_14_1` / `font_awesome_14_1`
+- Màn hình nhỏ-vừa (240x240): `font_puhui_basic_16_4` / `font_awesome_16_4`
+- Màn hình vừa (240x320): `font_puhui_basic_20_4` / `font_awesome_20_4`
+- Màn hình lớn (480x320+): `font_puhui_basic_30_4` / `font_awesome_30_4`
 
-表情集合选项：
-- `twemoji_32` - 32x32 像素表情（小屏幕）
-- `twemoji_64` - 64x64 像素表情（大屏幕）
+Các tùy chọn bộ emoji:
+- `twemoji_32` - emoji 32x32 pixel (màn hình nhỏ)
+- `twemoji_64` - emoji 64x64 pixel (màn hình lớn)
 
-### 5. 配置和编译
+### 5. Cấu hình và biên dịch
 
-#### 方法一：使用 idf.py 手动配置
+#### Cách 1: dùng `idf.py` cấu hình thủ công
 
-1. **设置目标芯片**（首次配置或更换芯片时）：
+1. **Đặt target chip** (khi cấu hình lần đầu hoặc đổi chip):
    ```bash
-   # 对于 ESP32-S3
+   # Với ESP32-S3
    idf.py set-target esp32s3
    
-   # 对于 ESP32-C3
+   # Với ESP32-C3
    idf.py set-target esp32c3
    
-   # 对于 ESP32
+   # Với ESP32
    idf.py set-target esp32
    ```
 
-2. **清理旧配置**：
+2. **Xóa cấu hình cũ**:
    ```bash
    idf.py fullclean
    ```
 
-3. **进入配置菜单**：
+3. **Mở menu cấu hình**:
    ```bash
    idf.py menuconfig
    ```
    
-   在菜单中导航到：`Xiaozhi Assistant` -> `Board Type`，选择你的自定义开发板。
+   Trong menu, đi tới `Xiaozhi Assistant` -> `Board Type`, rồi chọn board tùy chỉnh của bạn.
 
-4. **编译和烧录**：
+4. **Build và nạp**:
    ```bash
    idf.py build
    idf.py flash monitor
    ```
 
-#### 方法二：使用 release.py 脚本（推荐）
+#### Cách 2: dùng script `release.py` (khuyến nghị)
 
-如果你的开发板目录下有 `config.json` 文件，可以使用此脚本自动完成配置和编译：
+Nếu thư mục board của bạn có file `config.json`, có thể dùng script này để tự động cấu hình và build:
 
 ```bash
 python scripts/release.py my-custom-board
 ```
 
-此脚本会自动：
-- 读取 `config.json` 中的 `target` 配置并设置目标芯片
-- 应用 `sdkconfig_append` 中的编译选项
-- 完成编译并打包固件
+Script này sẽ tự động:
+- Đọc cấu hình `target` trong `config.json` và đặt chip đích
+- Áp dụng các tùy chọn build trong `sdkconfig_append`
+- Hoàn tất build và đóng gói firmware
 
-### 6. 创建README.md
+### 6. Tạo `README.md`
 
-在README.md中说明开发板的特性、硬件要求、编译和烧录步骤：
+Trong `README.md`, mô tả đặc điểm của board, yêu cầu phần cứng, cách build và cách nạp:
 
+## Các thành phần board thường gặp
 
-## 常见开发板组件
+### 1. Màn hình
 
-### 1. 显示屏
-
-项目支持多种显示屏驱动，包括:
+Dự án hỗ trợ nhiều driver màn hình, gồm:
 - ST7789 (SPI)
 - ILI9341 (SPI)
 - SH8601 (QSPI)
-- 等...
+- v.v.
 
-### 2. 音频编解码器
+### 2. Codec âm thanh
 
-支持的编解码器包括:
-- ES8311 (常用)
-- ES7210 (麦克风阵列)
-- AW88298 (功放)
-- 等...
+Các codec được hỗ trợ gồm:
+- ES8311 (thường dùng)
+- ES7210 (mảng micro)
+- AW88298 (power amplifier)
+- v.v.
 
-### 3. 电源管理
+### 3. Quản lý nguồn
 
-一些开发板使用电源管理芯片:
+Một số board dùng chip quản lý nguồn:
 - AXP2101
-- 其他可用的PMIC
+- các PMIC khác có thể dùng được
 
-### 4. MCP设备控制
+### 4. Điều khiển thiết bị MCP
 
-可以添加各种MCP工具，让AI能够使用:
-- Speaker (扬声器控制)
-- Screen (屏幕亮度调节)
-- Battery (电池电量读取)
-- Light (灯光控制)
-- 等...
+Có thể thêm nhiều MCP tool để AI sử dụng:
+- Speaker (điều khiển loa)
+- Screen (điều chỉnh độ sáng màn hình)
+- Battery (đọc mức pin)
+- Light (điều khiển đèn)
+- v.v.
 
-## 开发板类继承关系
+## Quan hệ kế thừa của lớp board
 
-- `Board` - 基础板级类
-  - `WifiBoard` - Wi-Fi连接的开发板
-  - `Ml307Board` - 使用4G模块的开发板
-  - `DualNetworkBoard` - 支持Wi-Fi与4G网络切换的开发板
+- `Board` - lớp board cơ sở
+  - `WifiBoard` - board kết nối Wi-Fi
+  - `Ml307Board` - board dùng module 4G
+  - `DualNetworkBoard` - board hỗ trợ chuyển đổi giữa Wi-Fi và 4G
 
-## 开发技巧
+## Kinh nghiệm phát triển
 
-1. **参考相似的开发板**：如果您的新开发板与现有开发板有相似之处，可以参考现有实现
-2. **分步调试**：先实现基础功能（如显示），再添加更复杂的功能（如音频）
-3. **管脚映射**：确保在config.h中正确配置所有管脚映射
-4. **检查硬件兼容性**：确认所有芯片和驱动程序的兼容性
+1. **Tham khảo board tương tự**: nếu board mới của bạn giống với board hiện có, hãy xem cách triển khai hiện tại
+2. **Debug từng bước**: làm xong tính năng cơ bản trước (như hiển thị), rồi mới thêm tính năng phức tạp hơn (như âm thanh)
+3. **Ánh xạ chân**: đảm bảo cấu hình đúng toàn bộ chân trong `config.h`
+4. **Kiểm tra tương thích phần cứng**: xác nhận mọi chip và driver đều tương thích
 
-## 可能遇到的问题
+## Vấn đề có thể gặp
 
-1. **显示屏不正常**：检查SPI配置、镜像设置和颜色反转设置
-2. **音频无输出**：检查I2S配置、PA使能引脚和编解码器地址
-3. **无法连接网络**：检查Wi-Fi凭据和网络配置
-4. **无法与服务器通信**：检查MQTT或WebSocket配置
+1. **Màn hình không hoạt động đúng**: kiểm tra cấu hình SPI, mirror và invert màu
+2. **Không có âm thanh đầu ra**: kiểm tra cấu hình I2S, chân bật PA và địa chỉ codec
+3. **Không kết nối được mạng**: kiểm tra thông tin Wi-Fi và cấu hình mạng
+4. **Không giao tiếp được với server**: kiểm tra cấu hình MQTT hoặc WebSocket
 
-## 参考资料
+## Tài liệu tham khảo
 
-- ESP-IDF 文档: https://docs.espressif.com/projects/esp-idf/
-- LVGL 文档: https://docs.lvgl.io/
-- ESP-SR 文档: https://github.com/espressif/esp-sr 
+- Tài liệu ESP-IDF: https://docs.espressif.com/projects/esp-idf/
+- Tài liệu LVGL: https://docs.lvgl.io/
+- Tài liệu ESP-SR: https://github.com/espressif/esp-sr

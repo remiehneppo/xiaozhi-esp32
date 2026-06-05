@@ -1,57 +1,57 @@
-# Build and Configuration Guide
+# Hướng dẫn biên dịch và cấu hình
 
-This document provides instructions on how to configure and build the firmware for **Movecall Moji2.0 (Xiaozhi AI Edition)**.
+Tài liệu này hướng dẫn cách cấu hình và biên dịch firmware cho **Movecall Moji2.0 (phiên bản Xiaozhi AI)**.
 
-## 🛠 Prerequisites
+## 🛠 Điều kiện cần có
 *   **ESP-IDF Version**: v5.5
 *   **Target Chip**: ESP32-C5
 
-## 🔗 Hardware Information
-This project is based on the following open-source hardware:
-*   **OSHWHub Link**: [https://oshwhub.com/movecall/moji2](https://oshwhub.com/movecall/moji2)
+## 🔗 Thông tin phần cứng
+Dự án này dựa trên phần cứng mã nguồn mở sau:
+*   **Liên kết OSHWHub**: [https://oshwhub.com/movecall/moji2](https://oshwhub.com/movecall/moji2)
 
 ---
 
-## 🚀 Build Steps
+## 🚀 Các bước biên dịch
 
-### 1. Set the Build Target
-Initialize the project to target the ESP32-C5 chip:
+### 1. Đặt mục tiêu biên dịch
+Khởi tạo dự án để nhắm tới chip ESP32-C5:
 ```bash
 idf.py set-target esp32c5
 ```
 
-### 2. Configure the Board Type
-Open the graphical configuration menu:
+### 2. Cấu hình loại bo mạch
+Mở menu cấu hình đồ họa:
 ```bash
 idf.py menuconfig
 ```
 
-**Navigate to the following path to select your board:**
-> **Xiaozhi Assistant** -> **Board Type** -> **Movecall Moji2.0 小智AI衍生版**
+**Đi tới đường dẫn sau để chọn bo mạch của bạn:**
+> **Xiaozhi Assistant** -> **Board Type** -> **Movecall Moji2.0 bản phái sinh Xiaozhi AI**
 
-*Note: After selecting, press **S** to save (then Enter to confirm) and press **Q** to exit.*
+*Lưu ý: Sau khi chọn, nhấn **S** để lưu (rồi Enter để xác nhận) và nhấn **Q** để thoát.*
 
-### 3. Build the Project
-Run the following command to start the compilation:
+### 3. Biên dịch dự án
+Chạy lệnh sau để bắt đầu biên dịch:
 ```bash
 idf.py build
 ```
 
 ---
 
-## 🔧 Useful Commands
+## 🔧 Lệnh hữu ích
 
-**Clean Build Files (Recommended if you encounter errors):**
+**Xóa file biên dịch cũ (khuyến nghị nếu gặp lỗi):**
 ```bash
 idf.py fullclean
 ```
 
-**Flash Firmware to Device:**
+**Nạp firmware vào thiết bị:**
 ```bash
 idf.py flash
 ```
 
-**Monitor Serial Output:**
+**Theo dõi đầu ra serial:**
 ```bash
 idf.py monitor
 ```

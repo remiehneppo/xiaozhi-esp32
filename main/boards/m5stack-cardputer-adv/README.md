@@ -1,25 +1,25 @@
 # M5Stack Cardputer Adv
 
-M5Stack Cardputer Adv 是一款基于 ESP32-S3FN8 (Stamp-S3A) 的卡片式电脑。
+M5Stack Cardputer Adv là một máy tính dạng thẻ dựa trên ESP32-S3FN8 (Stamp-S3A).
 
-## 硬件规格
+## Thông số phần cứng
 
-| 组件 | 规格 |
+| Thành phần | Thông số |
 |------|------|
 | MCU | ESP32-S3FN8 @ 240MHz |
 | Flash | 8MB |
-| 显示屏 | ST7789V2 1.14" 240x135 |
-| 音频编解码 | ES8311 |
-| 功放 | NS4150B |
-| 麦克风 | MEMS |
-| 键盘 | 56键 (TCA8418) |
+| Màn hình | ST7789V2 1.14" 240x135 |
+| Mã hóa/giải mã âm thanh | ES8311 |
+| Khuếch đại công suất | NS4150B |
+| Micro | MEMS |
+| Bàn phím | 56 phím (TCA8418) |
 | IMU | BMI270 |
-| 电池 | 1750mAh (带ADC电量监测) |
+| Pin | 1750mAh |
 
-## 引脚定义
+## Định nghĩa chân
 
-### 显示屏 (ST7789V2)
-| 功能 | GPIO |
+### Màn hình (ST7789V2)
+| Chức năng | GPIO |
 |------|------|
 | MOSI | GPIO35 |
 | SCLK | GPIO36 |
@@ -28,8 +28,8 @@ M5Stack Cardputer Adv 是一款基于 ESP32-S3FN8 (Stamp-S3A) 的卡片式电脑
 | RST | GPIO33 |
 | BL | GPIO38 |
 
-### 音频 (ES8311)
-| 功能 | GPIO |
+### Âm thanh (ES8311)
+| Chức năng | GPIO |
 |------|------|
 | I2C SDA | GPIO8 |
 | I2C SCL | GPIO9 |
@@ -38,21 +38,16 @@ M5Stack Cardputer Adv 是一款基于 ESP32-S3FN8 (Stamp-S3A) 的卡片式电脑
 | I2S DOUT | GPIO46 |
 | I2S DIN | GPIO42 |
 
-### 电池监测
-| 功能 | GPIO | 备注 |
-|------|------|------|
-| ADC | GPIO10 | 100KΩ / 100KΩ 分压 |
+## Cách sử dụng
 
-## 使用方法
+1. Nhấn nút BOOT để vào chế độ cấu hình mạng
+2. Sau khi kết nối Wi-Fi, bạn có thể dùng chức năng trợ lý giọng nói
 
-1. 按下 BOOT 按钮进入配网模式
-2. 连接 WiFi 后即可使用语音助手功能
+## Tham số nạp
 
-## 烧录参数
+Chip: ESP32-S3, Flash: 8MB, chế độ: DIO, tần số: 80MHz
 
-芯片: ESP32-S3, Flash: 8MB, 模式: DIO, 频率: 80MHz
-
-| 地址 | 文件 |
+| Địa chỉ | Tệp |
 |------|------|
 | 0x0 | bootloader/bootloader.bin |
 | 0x8000 | partition_table/partition-table.bin |
@@ -60,7 +55,7 @@ M5Stack Cardputer Adv 是一款基于 ESP32-S3FN8 (Stamp-S3A) 的卡片式电脑
 | 0x20000 | xiaozhi.bin |
 | 0x600000 | generated_assets.bin |
 
-烧录命令 (build 目录为 `build-cardputer-adv`):
+Lệnh nạp (thư mục build là `build-cardputer-adv`):
 
 ```bash
 python -m esptool --chip esp32s3 -b 460800 -p PORT \
@@ -73,8 +68,8 @@ python -m esptool --chip esp32s3 -b 460800 -p PORT \
   0x600000 build-cardputer-adv/generated_assets.bin
 ```
 
-将 `PORT` 替换为实际串口设备路径（如 `/dev/cu.usbmodem21101`）。
+Thay `PORT` bằng đường dẫn thiết bị serial thực tế (ví dụ `/dev/cu.usbmodem21101`).
 
-## 参考链接
+## Liên kết tham khảo
 
-- [M5Stack Cardputer Adv 官方文档](https://docs.m5stack.com/en/core/Cardputer-Adv)
+- [Tài liệu chính thức M5Stack Cardputer Adv](https://docs.m5stack.com/en/core/Cardputer-Adv)

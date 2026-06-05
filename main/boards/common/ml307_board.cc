@@ -12,9 +12,9 @@
 
 static const char *TAG = "Ml307Board";
 
-// Maximum retry count for modem detection
+// Số lần thử lại tối đa khi phát hiện modem
 static constexpr int MODEM_DETECT_MAX_RETRIES = 30;
-// Maximum retry count for network registration
+// Số lần thử lại tối đa khi đăng ký mạng
 static constexpr int NETWORK_REG_MAX_RETRIES = 6;
 
 Ml307Board::Ml307Board(gpio_num_t tx_pin, gpio_num_t rx_pin, gpio_num_t dtr_pin) : tx_pin_(tx_pin), rx_pin_(rx_pin), dtr_pin_(dtr_pin) {
@@ -58,17 +58,17 @@ void Ml307Board::OnNetworkEvent(NetworkEvent event, const std::string& data) {
             break;
     }
 
-    // Notify external callback if set
+    // Gọi callback bên ngoài nếu đã được thiết lập
     if (network_event_callback_) {
         network_event_callback_(event, data);
     }
 }
 
 void Ml307Board::NetworkTask() {
-    // Notify modem detection started
+    // Báo rằng quá trình phát hiện modem đã bắt đầu
     OnNetworkEvent(NetworkEvent::ModemDetecting);
 
-    // Try to detect modem with retry limit
+    // Thử phát hiện modem với giới hạn số lần thử lại
     int detect_retries = 0;
     while (detect_retries < MODEM_DETECT_MAX_RETRIES) {
         modem_ = AtModem::Detect(tx_pin_, rx_pin_, dtr_pin_, 921600);
@@ -87,8 +87,8 @@ void Ml307Board::NetworkTask() {
 
     ESP_LOGI(TAG, "Modem detected successfully");
 
-    // Set up network state change callback
-    // Note: Don't call GetCarrierName() here as it sends AT command and will block ReceiveTask
+    // Thiết lập callback khi trạng thái mạng thay đổi
+    // Lưu ý: không gọi GetCarrierName() ở đây vì nó gửi lệnh AT và sẽ chặn ReceiveTask
     modem_->OnNetworkStateChanged([this](bool network_ready) {
         if (network_ready) {
             OnNetworkEvent(NetworkEvent::Connected);
@@ -97,10 +97,10 @@ void Ml307Board::NetworkTask() {
         }
     });
 
-    // Notify network registration started
+    // Báo rằng quá trình đăng ký mạng đã bắt đầu
     OnNetworkEvent(NetworkEvent::Connecting);
 
-    // Wait for network ready with retry limit
+    // Chờ mạng sẵn sàng với giới hạn số lần thử lại
     int reg_retries = 0;
     while (reg_retries < NETWORK_REG_MAX_RETRIES) {
         auto result = modem_->WaitForNetworkReady();
@@ -122,7 +122,7 @@ void Ml307Board::NetworkTask() {
         return;
     }
 
-    // Print the ML307 modem information
+    // In thông tin modem ML307
     std::string module_revision = modem_->GetModuleRevision();
     std::string imei = modem_->GetImei();
     std::string iccid = modem_->GetIccid();
@@ -132,7 +132,7 @@ void Ml307Board::NetworkTask() {
 }
 
 void Ml307Board::StartNetwork() {
-    // Create network initialization task and return immediately
+    // Tạo tác vụ khởi tạo mạng rồi trả về ngay
     xTaskCreate([](void* arg) {
         Ml307Board* board = static_cast<Ml307Board*>(arg);
         board->NetworkTask();
@@ -166,7 +166,7 @@ const char* Ml307Board::GetNetworkStateIcon() {
 }
 
 std::string Ml307Board::GetBoardJson() {
-    // Set the board type for OTA
+    // Đặt loại bo mạch cho OTA
     std::string board_json = std::string("{\"type\":\"" BOARD_TYPE "\",");
     board_json += "\"name\":\"" BOARD_NAME "\",";
     board_json += "\"revision\":\"" + modem_->GetModuleRevision() + "\",";
@@ -179,15 +179,15 @@ std::string Ml307Board::GetBoardJson() {
 }
 
 void Ml307Board::SetPowerSaveLevel(PowerSaveLevel level) {
-    // TODO: Implement power save level for ML307
+    // TODO: Cài đặt mức tiết kiệm điện cho ML307
     (void)level;
 }
 
 std::string Ml307Board::GetDeviceStatusJson() {
     /*
-     * 返回设备状态JSON
+     * Trả về JSON trạng thái thiết bị
      * 
-     * 返回的JSON结构如下：
+     * Cấu trúc JSON trả về như sau:
      * {
      *     "audio_speaker": {
      *         "volume": 70
@@ -210,7 +210,7 @@ std::string Ml307Board::GetDeviceStatusJson() {
     auto& board = Board::GetInstance();
     auto root = cJSON_CreateObject();
 
-    // Audio speaker
+    // Loa âm thanh
     auto audio_speaker = cJSON_CreateObject();
     auto audio_codec = board.GetAudioCodec();
     if (audio_codec) {
@@ -218,7 +218,7 @@ std::string Ml307Board::GetDeviceStatusJson() {
     }
     cJSON_AddItemToObject(root, "audio_speaker", audio_speaker);
 
-    // Screen brightness
+    // Độ sáng màn hình
     auto backlight = board.GetBacklight();
     auto screen = cJSON_CreateObject();
     if (backlight) {
@@ -233,7 +233,7 @@ std::string Ml307Board::GetDeviceStatusJson() {
     }
     cJSON_AddItemToObject(root, "screen", screen);
 
-    // Battery
+    // Pin
     int battery_level = 0;
     bool charging = false;
     bool discharging = false;
@@ -244,7 +244,7 @@ std::string Ml307Board::GetDeviceStatusJson() {
         cJSON_AddItemToObject(root, "battery", battery);
     }
 
-    // Network
+    // Mạng
     auto network = cJSON_CreateObject();
     cJSON_AddStringToObject(network, "type", "cellular");
     cJSON_AddStringToObject(network, "carrier", modem_->GetCarrierName().c_str());

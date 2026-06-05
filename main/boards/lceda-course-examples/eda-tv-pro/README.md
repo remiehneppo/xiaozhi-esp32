@@ -1,13 +1,8 @@
-## EDA-TV-Pro 小电视
+## EDA-TV-Pro TV Nhỏ
 
-### 项目文档
-- [EDA-TV-Pro 项目文档](https://wiki.lceda.cn/zh-hans/course-projects/smart-internet/tv-pro/tv-pro-introduce.html)
+### Tài liệu dự án
+- [Tài liệu dự án EDA-TV-Pro](https://wiki.lceda.cn/zh-hans/course-projects/smart-internet/tv-pro/tv-pro-introduce.html)
 
-### 编译配置
-该项目采用的开发板Flash容量为8MB，编译时须配置：
+### Cấu hình biên dịch
+Dung lượng Flash của bo mạch phát triển được sử dụng trong dự án này là 8MB, cần cấu hình khi biên dịch:
 
-```
-Partition Table  --->
-  Partition Table (Custom partition table CSV)  --->
-  (partitions/v2/8m.csv) Custom partition CSV file
-```

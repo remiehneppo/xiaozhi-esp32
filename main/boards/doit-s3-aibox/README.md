@@ -1,42 +1,17 @@
-# 四博智联AI陪伴盒子
+# Hộp đồng hành AI của Xiaozhi
 
-# 特性
-* 使用PDM麦克风
-* 使用共阳极LED
+# Tính năng
+* Sử dụng micro PDM
+* Sử dụng LED anode chung
 
-## 按键配置
-* BUTTON3：短按-打断/唤醒
-* BUTTON1：音量+
-* BUTTON2：音量-
+## Cấu hình nút bấm
+* BUTTON3: Nhấn ngắn - Gián đoạn/Kích hoạt
+* BUTTON1: Tăng âm lượng
+* BUTTON2: Giảm âm lượng
 
-## 编译配置命令
+## Lệnh cấu hình biên dịch
 
-**配置编译目标为 ESP32S3：**
+**Cấu hình mục tiêu biên dịch là ESP32S3:**
 
 ```bash
 idf.py set-target esp32s3
-```
-
-**打开 menuconfig：**
-
-```bash
-idf.py menuconfig
-```
-
-**选择板子：**
-
-```
-Xiaozhi Assistant -> Board Type -> 四博智联AI陪伴盒子
-```
-
-**修改 psram 配置：**
-
-```
-Component config -> ESP PSRAM -> SPI RAM config -> Mode (QUAD/OCT) -> Octal Mode PSRAM
-```
-
-**编译：**
-
-```bash
-idf.py build
-```

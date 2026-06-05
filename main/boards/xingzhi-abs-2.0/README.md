@@ -1,77 +1,77 @@
-# 无名科技星智 ABS 2.0
+# Xingzhi ABS 2.0
 
-## 简介
-无名科技星智 ABS 2.0 是一款高性价比的 AI 语音交互开发板。它搭载 1.54 寸 LCD 屏幕，配备独立的物理按键，并采用 **ML307R 4G 通信模组**，让你在没有 Wi-Fi 的环境下也能随时随地与大模型对话。
+## Giới thiệu
+Xingzhi ABS 2.0 là một bo mạch phát triển tương tác giọng nói AI có chi phí hợp lý. Thiết bị trang bị màn hình LCD 1.54 inch, có các nút vật lý riêng và dùng **mô-đun liên lạc ML307R 4G**, giúp bạn trò chuyện với mô hình lớn mọi lúc mọi nơi ngay cả khi không có Wi-Fi.
 
-## 核心特性
-- 双网络通信：支持 Wi-Fi 与 ML307R Cat.1 4G 双模切换，适配多场景使用
-- 显示系统：1.54 寸 240×240 LCD 屏幕，自定义 UI 布局优化，适配 1.54 寸方形屏显示效果
-- 物理按键交互：独立 Boot 功能键、音量加减键，支持单击、双击、长按、五击多阶操作
-- 扩展能力：内置 Micro SD 卡插槽，支持本地存储扩展；可预留震动马达，实现按键操作触觉反馈
-- 完善的电源管理：支持电池电量 ADC 检测、充电状态实时监测、自动休眠与深度睡眠节能控制
-- 生态兼容：完全适配小智 ESP32 项目固件，支持 Qwen/DeepSeek 等大模型，兼容 MCP 协议设备控制
-- 由于硬件差异，UI显示上对底部表情和文本的显示位置稍有改动
+## Tính năng chính
+- Kết nối hai mạng: hỗ trợ chuyển đổi giữa Wi-Fi và ML307R Cat.1 4G, phù hợp cho nhiều kịch bản sử dụng
+- Hệ thống hiển thị: màn hình LCD 1.54 inch 240×240, bố cục UI tùy biến để tối ưu cho màn hình vuông 1.54 inch
+- Tương tác bằng nút vật lý: phím Boot riêng, phím tăng/giảm âm lượng, hỗ trợ nhấn một lần, nhấn đúp, nhấn giữ và nhấn năm lần
+- Khả năng mở rộng: có khe cắm Micro SD tích hợp, hỗ trợ mở rộng lưu trữ cục bộ; có chỗ chừa cho motor rung để phản hồi xúc giác khi thao tác nút
+- Quản lý nguồn hoàn chỉnh: hỗ trợ đo ADC mức pin, giám sát trạng thái sạc theo thời gian thực, ngủ tự động và chế độ deep sleep tiết kiệm điện
+- Tương thích hệ sinh thái: tương thích đầy đủ với firmware dự án Xiaozhi ESP32, hỗ trợ các mô hình lớn như Qwen/DeepSeek và tương thích điều khiển thiết bị qua giao thức MCP
+- Do khác biệt phần cứng, vị trí hiển thị của biểu tượng cảm xúc và văn bản ở phần dưới có thay đổi nhẹ
 
-## 与铝合金版本（XINGZHI_METAL_1_54_WIFI）核心差异
-| 功能特性 | xingzhi-abs-2.0 | 铝合金版本 |
+## Khác biệt cốt lõi so với bản nhôm (XINGZHI_METAL_1_54_WIFI)
+| Tính năng | xingzhi-abs-2.0 | Bản nhôm |
 |----------|------------------|------------|
-| 交互方式 | 独立物理按键（Boot/音量+/音量-） | CST816 触摸芯片+触摸交互 |
-| 外壳材质 | ABS 工程塑料 | 铝合金材质 |
+| Cách tương tác | Phím vật lý riêng (Boot/Tăng âm lượng/Giảm âm lượng) | Chip cảm ứng CST816 + tương tác cảm ứng |
+| Vật liệu vỏ | Nhựa kỹ thuật ABS | Hợp kim nhôm |
 
->### 按键操作
->- **开机**: 关机状态，长按电源键3秒后自动开机
->- **关机**: 开机状态，长按电源键5秒后自动关机
->- **唤醒/打断**: 正常通话/待机状态下，单击Boot功能键，可唤醒设备或打断正在进行的语音对话
->- **重新配网**: 开机后1秒钟内，单击Boot功能键，设备会自动重启并进入配网界面
->- **切换网络模式**: 开机状态下，双击Boot功能键，可切换Wi-Fi与4G网络模式
->- **SD卡状态检测**: 开机状态下，五击Boot功能键，可检测并在屏幕显示SD卡挂载状态
->- **增加音量**: 开机状态下，单击音量+按键，音量增加10%；长按音量+按键2s，音量直接递增至100%最大音量
->- **减小音量**: 开机状态下，单击音量-按键，音量减小10%；长按音量-按键2s，音量直接递减至0%静音
+>### Thao tác nút
+>- **Bật máy**: Ở trạng thái tắt nguồn, nhấn giữ nút nguồn 3 giây để tự động bật máy
+>- **Tắt máy**: Ở trạng thái bật máy, nhấn giữ nút nguồn 5 giây để tự động tắt máy
+>- **Đánh thức/ngắt**: Trong trạng thái đàm thoại hoặc chờ bình thường, nhấn một lần phím Boot để đánh thức thiết bị hoặc ngắt cuộc hội thoại đang diễn ra
+>- **Kết nối lại Wi-Fi**: Trong 1 giây sau khi bật máy, nhấn một lần phím Boot, thiết bị sẽ tự khởi động lại và vào giao diện cấu hình mạng
+>- **Chuyển chế độ mạng**: Khi đang bật máy, nhấn đúp phím Boot để chuyển giữa chế độ Wi-Fi và 4G
+>- **Kiểm tra trạng thái SD**: Khi đang bật máy, nhấn năm lần phím Boot để kiểm tra và hiển thị trạng thái gắn thẻ SD trên màn hình
+>- **Tăng âm lượng**: Khi đang bật máy, nhấn một lần phím tăng âm lượng để tăng 10%; nhấn giữ 2 giây để tăng thẳng lên mức tối đa 100%
+>- **Giảm âm lượng**: Khi đang bật máy, nhấn một lần phím giảm âm lượng để giảm 10%; nhấn giữ 2 giây để giảm thẳng xuống 0% (tắt tiếng)
 
->### 休眠操作
->- **浅睡眠**: 开机后，维持待命状态60s后，进入浅睡眠（屏幕亮度调整到1%）
->- **深睡眠**: 开机后，维持待命状态300s后，自动关机
->- **唤醒**: 浅睡眠状态下，单击任意按键，唤醒设备（屏幕亮度回调）
+>### Thao tác ngủ
+>- **Ngủ nông**: Sau khi bật máy và giữ trạng thái chờ 60 giây, thiết bị chuyển sang ngủ nông (độ sáng màn hình giảm xuống 1%)
+>- **Ngủ sâu**: Sau khi bật máy và giữ trạng thái chờ 300 giây, thiết bị sẽ tự động tắt nguồn
+>- **Đánh thức**: Ở trạng thái ngủ nông, nhấn bất kỳ phím nào để đánh thức thiết bị (độ sáng màn hình trở lại)
 
-# 编译配置命令
+# Lệnh cấu hình biên dịch
 
-**克隆工程**
+**Clone dự án**
 
 ```bash
 git clone https://github.com/78/xiaozhi-esp32.git
 ```
 
-**进入工程**
+**Vào thư mục dự án**
 
 ```bash
 cd xiaozhi-esp32
 ```
 
-**配置编译目标为 ESP32S3**
+**Thiết lập mục tiêu biên dịch là ESP32S3**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-**打开 menuconfig**
+**Mở menuconfig**
 
 ```bash
 idf.py menuconfig
 ```
 
-**选择板子**
+**Chọn bo mạch**
 
 ```bash
-- `Xiaozhi Assistant` → `Board Type` → 选择 `无名科技星智ABS 2.0`
+- `Xiaozhi Assistant` → `Board Type` → chọn `Xingzhi ABS 2.0`
 ```
 
-**编译**
+**Biên dịch**
 
-```ba
+```bash
 idf.py build
 ```
 
-**下载并打开串口终端**
+**Nạp và mở terminal serial**
 
 ```bash
 idf.py build flash monitor

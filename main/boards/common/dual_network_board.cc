@@ -13,16 +13,16 @@ DualNetworkBoard::DualNetworkBoard(gpio_num_t ml307_tx_pin, gpio_num_t ml307_rx_
       ml307_rx_pin_(ml307_rx_pin), 
       ml307_dtr_pin_(ml307_dtr_pin) {
     
-    // 从Settings加载网络类型
+    // Tải loại mạng từ Settings
     network_type_ = LoadNetworkTypeFromSettings(default_net_type);
     
-    // 只初始化当前网络类型对应的板卡
+    // Chỉ khởi tạo bo mạch tương ứng với loại mạng hiện tại
     InitializeCurrentBoard();
 }
 
 NetworkType DualNetworkBoard::LoadNetworkTypeFromSettings(int32_t default_net_type) {
     Settings settings("network", true);
-    int network_type = settings.GetInt("type", default_net_type); // 默认使用ML307 (1)
+    int network_type = settings.GetInt("type", default_net_type); // Mặc định dùng ML307 (1)
     return network_type == 1 ? NetworkType::ML307 : NetworkType::WIFI;
 }
 
@@ -73,7 +73,7 @@ void DualNetworkBoard::StartNetwork() {
 }
 
 void DualNetworkBoard::SetNetworkEventCallback(NetworkEventCallback callback) {
-    // Forward the callback to the current board
+    // Chuyển tiếp callback tới bo mạch hiện tại
     current_board_->SetNetworkEventCallback(std::move(callback));
 }
 

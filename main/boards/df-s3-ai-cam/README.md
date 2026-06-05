@@ -1,75 +1,73 @@
-# DFRobot ESP32-S3 AI智能摄像头模块
+# DFRobot ESP32-S3 AI Camera Module
 
-## 介绍
-ESP32-S3 AI CAM是一款基于ESP32-S3芯片设计的智能摄像头模组，专为视频图像处理和语音交互打造，适用于视频监控、边缘图像识别、语音对话等AI项目。
+## Giới thiệu
+ESP32-S3 AI CAM là một module camera thông minh dựa trên chip ESP32-S3, được thiết kế cho xử lý hình ảnh video và tương tác giọng nói, phù hợp cho giám sát video, nhận dạng ảnh ở biên và các dự án đối thoại AI.
 ![](https://ws.dfrobot.com.cn/FsTrGbrX2NZAwzWS8OSQGOGikuYA)
 
-[点击查看详细介绍](https://wiki.dfrobot.com.cn/SKU_DFR1154_ESP32_S3_AI_CAM)
+[Xem giới thiệu chi tiết](https://wiki.dfrobot.com.cn/SKU_DFR1154_ESP32_S3_AI_CAM)
 
-[点击查看视觉功能演示](https://www.bilibili.com/video/BV1ktjSzNEUU/)
+[Xem demo chức năng thị giác](https://www.bilibili.com/video/BV1ktjSzNEUU/)
 
-# 特性
-* 使用PDM麦克风
-* 板载 OV3660 摄像头
+# Tính năng
+* Dùng micro PDM
+* Có sẵn camera OV3660 trên board
 
-## 按键配置
-* BOOT：短按-打断/唤醒
+## Cấu hình phím
+* BOOT: nhấn ngắn để ngắt / đánh thức
 
-## 编译配置命令
+## Lệnh build
 
-**配置编译目标为 ESP32S3：**
+**Chọn target ESP32S3:**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-**打开 menuconfig：**
+**Mở menuconfig:**
 
 ```bash
 idf.py menuconfig
 ```
 
-**选择板子：**
+**Chọn board:**
 
 ```
-Xiaozhi Assistant -> Board Type -> DFRobot ESP32-S3 AI智能摄像头模块
+Xiaozhi Assistant -> Board Type -> DFRobot ESP32-S3 AI Camera Module
 ```
 
-**修改 psram 配置：**
+**Điều chỉnh PSRAM:**
 
 ```
 Component config -> ESP PSRAM -> SPI RAM config -> Mode (QUAD/OCT) -> Octal Mode PSRAM
 ```
 
-**修改 WiFi 发射功率 为 10：**
+**Đặt công suất phát Wi-Fi là 10:**
 
 ```
 Component config -> PHY -> (10)Max WiFi TX power (dBm)
 ```
 
-**配置摄像头：**
+**Cấu hình camera:**
 
 * **OV3660**
 ```
-Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> OV3660 ->  Auto detect OV3660
-
+Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> OV3660 -> Auto detect OV3660
 ```
 
 ```
-Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> OV3660 ->  Select default output format for DVP interface (YUV422 240x240 24fps, DVP 8-bit, 20M input)
+Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> OV3660 -> Select default output format for DVP interface (YUV422 240x240 24fps, DVP 8-bit, 20M input)
 ```
 
 * **OV2640**
 ```
-Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> OV2640 ->  Auto detect OV2640
-
+Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> OV2640 -> Auto detect OV2640
 ```
 
 ```
-Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> OV2640 ->  Select default output format for DVP interface (YUV422 240x240 25fps, DVP 8-bit, 20M input)
+Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> OV2640 -> Select default output format for DVP interface (YUV422 240x240 25fps, DVP 8-bit, 20M input)
 ```
 
-**编译：**
+**Build:**
 
 ```bash
 idf.py build

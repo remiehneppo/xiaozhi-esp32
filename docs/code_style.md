@@ -1,17 +1,17 @@
-# Code Style Guide
+# Hướng Dẫn Phong Cách Mã Nguồn
 
-## Formatting Tool
+## Công Cụ Định Dạng
 
-This project uses `clang-format` to keep the code style consistent. The `.clang-format` file in the project root is based on the Google C++ style guide with a few project-specific tweaks.
+Dự án này sử dụng `clang-format` để giữ cho phong cách mã nguồn nhất quán. Tệp `.clang-format` trong thư mục gốc của dự án dựa trên hướng dẫn phong cách C++ của Google với một vài điều chỉnh dành riêng cho dự án.
 
-### Installing clang-format
+### Cài Đặt clang-format
 
-Make sure `clang-format` is available before you use it:
+Hãy đảm bảo `clang-format` có sẵn trước khi bạn sử dụng nó:
 
 - **Windows**:
   ```powershell
   winget install LLVM
-  # or with Chocolatey
+  # hoặc với Chocolatey
   choco install llvm
   ```
 
@@ -26,50 +26,50 @@ Make sure `clang-format` is available before you use it:
   brew install clang-format
   ```
 
-### Usage
+### Cách Sử Dụng
 
-1. **Format a single file**:
+1. **Định dạng một tệp duy nhất**:
    ```bash
    clang-format -i path/to/your/file.cpp
    ```
 
-2. **Format the entire project**:
+2. **Định dạng toàn bộ dự án**:
    ```bash
-   # Run from the project root
+   # Chạy từ thư mục gốc của dự án
    find main -iname '*.h' -o -iname '*.cc' | xargs clang-format -i
    ```
 
-3. **Check formatting without modifying files (useful in CI / pre-commit)**:
+3. **Kiểm tra định dạng mà không sửa đổi tệp (hữu ích trong CI / pre-commit)**:
    ```bash
    clang-format --dry-run -Werror path/to/your/file.cpp
    ```
 
-### IDE Integration
+### Tích Hợp IDE
 
 - **Visual Studio Code**:
-  1. Install the C/C++ extension.
-  2. Set `C_Cpp.formatting` to `clangFormat` in settings.
-  3. Optionally enable `editor.formatOnSave`.
+  1. Cài đặt tiện ích mở rộng C/C++.
+  2. Đặt `C_Cpp.formatting` thành `clangFormat` trong cài đặt.
+  3. Tùy chọn bật `editor.formatOnSave`.
 
 - **CLion**:
-  1. Open `Editor > Code Style > C/C++` in the settings.
-  2. Set `Formatter` to `clang-format`.
-  3. Choose "use the .clang-format file in the project".
+  1. Mở `Editor > Code Style > C/C++` trong cài đặt.
+  2. Đặt `Formatter` thành `clang-format`.
+  3. Chọn "use the .clang-format file in the project".
 
-### Main Rules
+### Các Quy Tắc Chính
 
-- Indent with 4 spaces.
-- Line width capped at 100 characters.
-- Attach-style braces (`{` on the same line as the control statement).
-- Pointers and references bind to the type (left alignment).
-- Includes are sorted automatically.
-- Access specifiers are indented by -4 spaces.
+- Thụt lề bằng 4 khoảng trắng.
+- Chiều rộng dòng được giới hạn ở 100 ký tự.
+- Dấu ngoặc kiểu attach-style (`{` trên cùng dòng với câu lệnh điều khiển).
+- Con trỏ và tham chiếu liên kết với kiểu (căn trái).
+- Các include được sắp xếp tự động.
+- Các bộ chỉ định truy cập được thụt lề bằng -4 khoảng trắng.
 
-### Notes
+### Lưu Ý
 
-1. Make sure the code has been formatted before committing.
-2. Do not fix up alignment by hand after running clang-format.
-3. To exclude a block from formatting, wrap it with:
+1. Hãy đảm bảo mã đã được định dạng trước khi commit.
+2. Không sửa thủ công sự căn chỉnh sau khi chạy clang-format.
+3. Để loại trừ một khối khỏi việc định dạng, hãy bao nó bằng:
    ```cpp
    // clang-format off
    your code
@@ -78,13 +78,13 @@ Make sure `clang-format` is available before you use it:
 
 ### FAQ
 
-1. **Formatting fails**:
-   - Check whether `clang-format` is too old.
-   - Make sure the file is UTF-8 encoded.
-   - Validate the syntax of your `.clang-format` file.
+1. **Định dạng thất bại**:
+   - Kiểm tra xem `clang-format` có quá cũ không.
+   - Đảm bảo tệp được mã hóa bằng UTF-8.
+   - Xác thực cú pháp của tệp `.clang-format` của bạn.
 
-2. **Output differs from what you expected**:
-   - Verify that the `.clang-format` in the project root is actually picked up.
-   - Make sure no other `.clang-format` higher in the tree is winning.
+2. **Kết quả khác với mong đợi**:
+   - Xác minh rằng `.clang-format` trong thư mục gốc của dự án thực sự được chọn.
+   - Đảm bảo không có `.clang-format` nào khác ở cấp cao hơn trong cây đang thắng thế.
 
-Questions and suggestions are welcome - please open an issue or a pull request.
+Chào mừng các câu hỏi và đề xuất - vui lòng mở một issue hoặc một pull request.

@@ -1,42 +1,42 @@
-# DFRobot 行空板 K10
+# DFRobot Haikong Board K10
 
-## 按键配置
-* A：短按-打断/唤醒，长按1s-音量调大
-* B：短按-打断/唤醒，长按1s-音量调小
+## Cấu hình nút bấm
+* A: nhấn ngắn - ngắt/đánh thức, nhấn giữ 1s - tăng âm lượng
+* B: nhấn ngắn - ngắt/đánh thức, nhấn giữ 1s - giảm âm lượng
 
-## 编译配置命令
+## Lệnh cấu hình biên dịch
 
-**配置编译目标为 ESP32S3：**
+**Thiết lập mục tiêu biên dịch là ESP32S3:**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-**打开 menuconfig：**
+**Mở menuconfig:**
 
 ```bash
 idf.py menuconfig
 ```
 
-**选择板子：**
+**Chọn bo mạch:**
 
 ```
-Xiaozhi Assistant -> Board Type -> DFRobot 行空板 K10
+Xiaozhi Assistant -> Board Type -> DFRobot Haikong Board K10
 ```
 
-**修改 psram 配置：**
+**Chỉnh cấu hình PSRAM:**
 
 ```
 Component config -> ESP PSRAM -> SPI RAM config -> Mode (QUAD/OCT) -> Octal Mode PSRAM
 ```
 
-**使能摄像头缓冲区大小端交换：**
+**Bật hoán đổi endian cho bộ đệm camera:**
 
 ```
 Xiaozhi Assistant -> Camera Configuration -> Enable software camera buffer endianness swapping
 ```
 
-**配置摄像头：**
+**Cấu hình camera:**
 ```
 Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Configuration -> Select and Set Camera Sensor -> GC2145 ->  Auto detect GC2145
 
@@ -47,7 +47,7 @@ Component config -> Espressif Camera Sensors Configurations -> Camera Sensor Con
 
 ```
 
-**编译：**
+**Biên dịch:**
 
 ```bash
 idf.py build

@@ -1,89 +1,51 @@
-# M5Stack AtomS3R + Echo Pyramid
+# Lệnh cấu hình biên dịch
 
-> [!NOTE]
-> Echo Pyramid 正常运行时请从 Pyramid 底座的 USB-C 口供电；AtomS3R 的 USB-C 口主要用于烧录。
-
-## 快速构建
-
-推荐使用 release 脚本生成完整固件包：
-
-```bash
-python scripts/release.py atoms3r-echo-pyramid --name atoms3r-echo-pyramid
-```
-
-生成的固件压缩包位于：
-
-```text
-releases/v2.2.6_atoms3r-echo-pyramid.zip
-```
-
-## 手动配置
-
-配置编译目标：
+**Thiết lập mục tiêu biên dịch là ESP32S3:**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-打开配置菜单：
+**Mở menuconfig:**
 
 ```bash
 idf.py menuconfig
 ```
 
-选择板卡：
+**Chọn bo mạch:**
 
 ```text
 Xiaozhi Assistant -> Board Type -> M5Stack AtomS3R + Echo Pyramid
 ```
 
-配置 Flash 大小：
+**Chỉnh kích thước flash:**
 
 ```text
 Serial flasher config -> Flash size -> 8 MB
 ```
 
-配置分区表：
+**Chỉnh bảng phân vùng:**
 
 ```text
 Partition Table -> Custom partition CSV file -> partitions/v2/8m.csv
 ```
 
-配置 PSRAM：
+**Chỉnh cấu hình PSRAM:**
 
 ```text
 Component config -> ESP PSRAM -> SPI RAM config -> Mode (QUAD/OCT) -> Octal Mode PSRAM
 ```
 
-编译：
+**Biên dịch:**
 
 ```bash
 idf.py build
 ```
 
-## 合并固件
+## Hướng dẫn sử dụng
 
-手动构建后，可使用以下命令合并烧录固件：
+Khi Echo Pyramid hoạt động bình thường, hãy cấp nguồn qua cổng USB-C của đế Pyramid; cổng USB-C của AtomS3R chủ yếu dùng để nạp firmware.
 
-```bash
-esptool.py --chip esp32s3 merge_bin \
-    --flash_mode dio \
-    --flash_freq 80m \
-    --flash_size 8MB \
-    0x0 build/bootloader/bootloader.bin \
-    0x8000 build/partition_table/partition-table.bin \
-    0xd000 build/ota_data_initial.bin \
-    0x20000 build/xiaozhi.bin \
-    0x600000 build/generated_assets.bin \
-    -o AtomS3R-EchoPyramid-XiaoZhi-v2.2.6_0x00.bin
-```
+# Tài liệu tham khảo
 
-烧录合并后的固件：
-
-```bash
-esptool.py -b 1500000 write_flash -z 0 AtomS3R-EchoPyramid-XiaoZhi-v2.2.6_0x00.bin
-```
-
-## 参考资料
-
-- https://github.com/m5stack/M5Echo-Pyramid
+https://github.com/m5stack/M5Echo-Pyramid

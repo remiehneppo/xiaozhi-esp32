@@ -1,29 +1,30 @@
 # NULLLAB-AI-VOX3
 
-## 概述
+## Tổng quan
 
-AI-VOX3是AI VOX的升级款，是一款专为AI语音交互应用设计的高性能嵌入式开发板。其核心采用ESP32-S3-R8芯片，并板载16MB Flash存储器。集成了丰富的硬件资源，支持快速开发与灵活扩展。集五合一功能(AI聊天/天气时钟/无线对讲机MP3音乐播放器/网络电台)，同时支持本地语音唤醒、指令识别和语音合成，可广泛应用于智能家居、教育设备和物联网终端等领域。其PCB尺寸兼容乐高插销，可直接安装在积木C款上，便于DIY搭建，同时配套AI-VOX3扩展板与MD40电机驱动板，助力开发者基于板载资源快速构建原型，并通过丰富接口实现个性化功能扩展，大幅缩短开发周期。
+AI-VOX3 là phiên bản nâng cấp của AI VOX, một bo mạch phát triển nhúng hiệu năng cao được thiết kế đặc biệt cho các ứng dụng tương tác giọng nói AI. Lõi của nó sử dụng chip ESP32-S3-R8 và tích hợp bộ nhớ Flash 16MB trên bo mạch. Nó tích hợp các tài nguyên phần cứng phong phú, hỗ trợ phát triển nhanh chóng và mở rộng linh hoạt. Với chức năng tất cả trong một (Trò chuyện AI/Đồng hồ thời tiết/Bộ đàm không dây/Máy nghe nhạc MP3/Đài mạng), nó hỗ trợ đánh thức giọng nói cục bộ, nhận dạng lệnh và tổng hợp giọng nói, có thể được ứng dụng rộng rãi trong nhà thông minh, thiết bị giáo dục và các thiết bị đầu cuối IoT. Kích thước PCB của nó tương thích với các chốt Lego, có thể lắp trực tiếp vào khối C của Lego, thuận tiện cho việc lắp ráp DIY. Đồng thời, nó đi kèm với bo mạch mở rộng AI-VOX3 và bo mạch điều khiển động cơ MD40, giúp nhà phát triển nhanh chóng xây dựng nguyên mẫu dựa trên tài nguyên trên bo mạch và mở rộng chức năng cá nhân hóa thông qua các giao diện phong phú, giảm đáng kể chu kỳ phát triển.
 
-## 功能特点
+## Tính năng nổi bật
 
-- 搭载 ESP32-S3R8 高性能 Xtensa 32 位 LX7 双核处理器，主频高达240MHz
-- 支持 2.4 GHz Wi-Fi (802.11 b/g/n) 和 Bluetooth 5 (LE)，板载天线
-- ESP32-S3R8芯片内置 512 KB SRAM 和 384 KB ROM以及8MB PSRAM，板载16 MB Flash 存储芯片
-- 采用 Type-C 接口，支持程序下载、板载供电及锂电池充电，兼容主流开发环境，简化开发与电源管理流程
-- 采用电源复位按键二合一，将系统复位和开关机集成到Power按键中，短按开机或系统复位，长按关机，简化操作
-- 可接1.54寸240×240分辨率SPI接口LCD（ST7789），提供直观图形化交互界面
-- 预留LCD排线和OLED插口，可以选择OLED或者LCD彩屏显示
-- 板载ES8311音频编码解码器与3W音频放大器（NS4150B），支持高保真音频输入/输出，需外接喇叭
-- 双麦克风设计，板载模拟麦克风，还可以外挂模拟麦克风，支持单麦打断
-- 板载SD Card接口，支持大容量存储扩展
-- 板载BOOT按键、2个按键（GPIO46/45）及WS2812B RGB灯，便于交互调试与状态指示
-- 引出一组8个GPIO排针接口（GPIO43/44/42/48/4/3/2/1），支持多种外设接入
-- 预留一个4pin PH2.0接口，可以方便通过PH2.0供电，也可以和其他主控通讯
-- 配套外接AI-VOX3扩展板，可通过其扩展板的排针接口扩展更多功能
-- 配套外接MD40电机驱动板，可通过其驱动板运行多个电机
-- 板载充电升压5V 2.4A输出一体电路，支持外接锂电池供电，并通过IO18 ADC实时检测电量
-- 支持ESP-IDF、Arduino IDE、AilyBlockly
+- Trang bị bộ xử lý lõi kép Xtensa 32-bit LX7 hiệu năng cao ESP32-S3R8, tần số chính lên đến 240MHz
+- Hỗ trợ Wi-Fi 2.4 GHz (802.11 b/g/n) và Bluetooth 5 (LE), có ăng-ten tích hợp trên bo mạch
+- Chip ESP32-S3R8 tích hợp 512 KB SRAM và 384 KB ROM cùng 8MB PSRAM, chip lưu trữ Flash 16 MB trên bo mạch
+- Sử dụng giao diện Type-C, hỗ trợ tải chương trình, cấp nguồn trên bo mạch và sạc pin lithium, tương thích với các môi trường phát triển chính, đơn giản hóa quy trình phát triển và quản lý nguồn điện
+- Sử dụng nút nguồn/reset hai trong một, tích hợp chức năng reset hệ thống và bật/tắt nguồn vào nút Power. Nhấn ngắn để bật nguồn hoặc reset hệ thống, nhấn dài để tắt nguồn, đơn giản hóa thao tác
+- Có thể kết nối LCD giao diện SPI 1.54 inch độ phân giải 240×240 (ST7789), cung cấp giao diện tương tác đồ họa trực quan
+- Dự trữ đầu nối cáp LCD và cổng OLED, có thể chọn hiển thị bằng OLED hoặc màn hình màu LCD
+- Bộ mã hóa/giải mã âm thanh ES8311 và bộ khuếch đại âm thanh 3W (NS4150B) tích hợp trên bo mạch, hỗ trợ đầu vào/đầu ra âm thanh chất lượng cao, cần kết nối loa ngoài
+- Thiết kế micro kép, có micro analog tích hợp trên bo mạch, cũng có thể gắn micro analog ngoài, hỗ trợ ngắt lời bằng micro đơn
+- Cổng SD Card tích hợp trên bo mạch, hỗ trợ mở rộng lưu trữ dung lượng lớn
+- Nút BOOT tích hợp trên bo mạch, 2 nút (GPIO46/45) và đèn RGB WS2812B, thuận tiện cho việc gỡ lỗi tương tác và chỉ thị trạng thái
+- Cung cấp một nhóm 8 chân cắm GPIO (GPIO43/44/42/48/4/3/2/1), hỗ trợ kết nối nhiều thiết bị ngoại vi
+- Dự trữ một cổng PH2.0 4pin, có thể dễ dàng cấp nguồn qua PH2.0 hoặc giao tiếp với bộ điều khiển chính khác
+- Đi kèm với bo mạch mở rộng AI-VOX3 ngoài, có thể mở rộng thêm nhiều chức năng thông qua các chân cắm của bo mạch mở rộng
+- Đi kèm với bo mạch điều khiển động cơ MD40 ngoài, có thể chạy nhiều động cơ thông qua bo mạch điều khiển
+- Mạch tích hợp trên bo mạch để tăng áp sạc 5V 2.4A, hỗ trợ cấp nguồn bằng pin lithium ngoài và kiểm tra điện lượng theo thời gian thực thông qua ADC IO18
+- Hỗ trợ ESP-IDF, Arduino IDE, AilyBlockly
 
-## Power按键说明
+## Hướng dẫn nút Power
 
-AI-VOX3取消了传统的Reset复位按键，改为使用Power按键统一操作，短按一次Power按键则进行开机或系统复位，长按Power按键则进行关机。
+AI-VOX3 đã loại bỏ nút Reset truyền thống, thay vào đó sử dụng nút Power để thao tác thống nhất. Nhấn nút Power một lần sẽ bật nguồn hoặc reset hệ thống, nhấn giữ nút Power sẽ tắt nguồn.
+

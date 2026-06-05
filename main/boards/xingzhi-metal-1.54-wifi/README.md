@@ -1,60 +1,60 @@
-# 无名科技星智 1.54 METAL (wifi)
+# Xingzhi 1.54 METAL (wifi)
 
-## 简介
-无名科技星智 1.54 METAL (wifi) 是星智 1.54 开模版的升级款，配备 1.54 寸 LCD 屏幕与 CST816 触摸芯片。它用触摸交互替代物理按键，并将外壳升级为铝合金材质，同步优化了交互体验与产品质感、手感。
+## Giới thiệu
+Xingzhi 1.54 METAL (wifi) là bản nâng cấp của mẫu mở khuôn Xingzhi 1.54, trang bị màn hình LCD 1.54 inch và chip cảm ứng CST816. Thiết bị dùng tương tác cảm ứng thay cho nút bấm vật lý và nâng cấp vỏ sang chất liệu hợp kim nhôm, đồng thời tối ưu trải nghiệm tương tác cũng như cảm giác cầm nắm và chất lượng hoàn thiện.
 
->### 按键操作
->- **开机**: 关机状态，长按电源键3秒后自动开机（旧版硬件长按电源键1s后自动开机）
->- **关机**: 开机状态，长按电源键5秒后自动关机（旧版硬件插入usb时不会自动关机）   
->- **唤醒/打断**: 正常通话环境下，单击中间触摸按键
->- **重新配网**: 开机后，1秒钟内单击中间触摸按键，会自动重启并进入配网界面
->- **增加音量**: 开机状态下，单击右侧触摸按键，音量增加。长按右侧触摸按键2s，音量递增。
->- **减小音量**: 开机状态下，单击左侧触摸按键，音量减小。长按左侧触摸按键2s，音量递减。
+>### Thao tác nút
+>- **Bật máy**: Ở trạng thái tắt nguồn, nhấn giữ nút nguồn 3 giây để tự động bật máy (phần cứng đời cũ chỉ cần nhấn giữ nút nguồn 1 giây)
+>- **Tắt máy**: Ở trạng thái bật máy, nhấn giữ nút nguồn 5 giây để tự động tắt máy (phần cứng đời cũ sẽ không tự tắt khi cắm USB)
+>- **Đánh thức/ngắt**: Trong môi trường đàm thoại bình thường, nhấn một lần vào nút cảm ứng ở giữa
+>- **Kết nối lại Wi-Fi**: Sau khi bật máy, nhấn một lần vào nút cảm ứng ở giữa trong vòng 1 giây, thiết bị sẽ tự khởi động lại và vào giao diện cấu hình mạng
+>- **Tăng âm lượng**: Khi đang bật máy, nhấn một lần vào nút cảm ứng bên phải để tăng âm lượng. Nhấn giữ nút cảm ứng bên phải 2 giây để tăng dần âm lượng.
+>- **Giảm âm lượng**: Khi đang bật máy, nhấn một lần vào nút cảm ứng bên trái để giảm âm lượng. Nhấn giữ nút cảm ứng bên trái 2 giây để giảm dần âm lượng.
 
->### 休眠操作
->- **浅睡眠**: 开机后，维持待命状态60s后，进入浅睡眠（屏幕亮度调整到1%）
->- **深睡眠**: 开机后，维持待命状态300s后，进入深睡眠（自动关机）
->- **唤醒**: 浅睡眠状态下，单击中间触摸按键，唤醒设备（屏幕亮度回调）
+>### Thao tác ngủ
+>- **Ngủ nông**: Sau khi bật máy và giữ trạng thái chờ 60 giây, thiết bị chuyển sang ngủ nông (độ sáng màn hình giảm xuống 1%)
+>- **Ngủ sâu**: Sau khi bật máy và giữ trạng thái chờ 300 giây, thiết bị chuyển sang ngủ sâu (tự động tắt nguồn)
+>- **Đánh thức**: Ở trạng thái ngủ nông, nhấn một lần vào nút cảm ứng ở giữa để đánh thức thiết bị (độ sáng màn hình trở lại)
 
-# 编译配置命令
+# Lệnh cấu hình biên dịch
 
-**克隆工程**
+**Clone dự án**
 
 ```bash
 git clone https://github.com/78/xiaozhi-esp32.git
 ```
 
-**进入工程**
+**Vào thư mục dự án**
 
 ```bash
 cd xiaozhi-esp32
 ```
 
-**配置编译目标为 ESP32S3**
+**Thiết lập mục tiêu biên dịch là ESP32S3**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-**打开 menuconfig**
+**Mở menuconfig**
 
 ```bash
 idf.py menuconfig
 ```
 
-**选择板子**
+**Chọn bo mạch**
 
 ```bash
-- `Xiaozhi Assistant` → `Board Type` → 选择 `无名科技星智1.54 METAL(wifi)`
+- `Xiaozhi Assistant` → `Board Type` → chọn `Xingzhi 1.54 METAL(wifi)`
 ```
 
-**编译**
+**Biên dịch**
 
-```ba
+```bash
 idf.py build
 ```
 
-**下载并打开串口终端**
+**Nạp và mở terminal serial**
 
 ```bash
 idf.py build flash monitor

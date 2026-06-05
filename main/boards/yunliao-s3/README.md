@@ -1,97 +1,97 @@
 # 小智云聊 S3
 
-## 简介
+## Giới thiệu
 
-小智云聊 S3 是小智 AI 的魔改项目，是首个 2.8 寸护眼大屏+大字体+2000mah 大电池的量产成品，做了大量创新和优化。
+XiaoZhi Yunliao S3 là một biến thể tùy biến của XiaoZhi AI, là sản phẩm thương mại đầu tiên có màn hình lớn 2.8 inch bảo vệ mắt, chữ lớn và pin 2000mAh, với nhiều cải tiến và tối ưu.
 
-## 官方版
+## Bản chính thức
 
-官方版代码在小智 AI 主项目中维护，跟随主项目的一起版本更新，便于用户自行扩展和第三方固件扩展。支持语音唤醒、语音打断、OTA、4G 自由切换等功能。
+Mã nguồn bản chính thức được duy trì trong dự án XiaoZhi AI chính, cập nhật theo phiên bản của dự án gốc, thuận tiện cho việc mở rộng và dùng firmware bên thứ ba. Hỗ trợ đánh thức bằng giọng nói, ngắt lời bằng giọng nói, OTA và chuyển đổi linh hoạt 4G.
 
-> ### 按键操作
+> ### Thao tác nút
 >
-> - **开机**: 关机状态，长按 1 秒后释放按键，自动开机。
-> - **关机**: 开机状态，长按 1 秒后释放按键，标题栏会显示'请稍候'，再等 2 秒自动关机。
-> - **唤醒/打断**: 正常通话环境下，单击按键。
-> - **切换 4G/Wifi**: 启动过程或者配网界面，1 秒钟内双击按键（需安装 4G 模块）。
-> - **切换语音(AEC)打断模式**: 正常启动后，在空闲无对话模式下，1 秒钟内双击按键，循环切换语音打断模式。
-> - **重新配网**: 开机状态，1 秒钟内三击按键，会自动重启并进入配网界面。
-
-> ### 语音指令
+> - **Bật máy**: ở trạng thái tắt, giữ nút 1 giây rồi thả ra, máy sẽ tự bật.
+> - **Tắt máy**: ở trạng thái bật, giữ nút 1 giây rồi thả ra, thanh tiêu đề sẽ hiện "Vui lòng chờ", đợi thêm 2 giây máy sẽ tự tắt.
+> - **Đánh thức/ngắt lời**: khi đang trong cuộc trò chuyện bình thường, nhấn một lần.
+> - **Chuyển 4G/Wi-Fi**: trong lúc khởi động hoặc ở màn hình cấu hình mạng, nhấn đúp trong vòng 1 giây (cần có module 4G).
+> - **Chuyển chế độ ngắt lời giọng nói (AEC)**: sau khi khởi động bình thường, khi đang ở trạng thái rảnh không trò chuyện, nhấn đúp trong vòng 1 giây để luân phiên đổi chế độ ngắt lời.
+> - **Cấu hình mạng lại**: khi máy đang bật, nhấn ba lần trong vòng 1 giây, máy sẽ tự khởi động lại và vào màn hình cấu hình mạng.
 >
-> - **打开/关闭语音(AEC)打断模式**: 在播放音乐时，需要关闭语音打断模式，否则可能会打断音乐播放。
-> - **切换 IPS 屏幕显示模式**: 新版小智云聊 S3 升级了 IPS 屏幕，需要切换屏幕显示模式后才能正常显示，可以来回切换。
-
-## 魔改版
-
-魔改版由于底层改动太大，代码单独维护，定期合并主项目代码。
-
-> ### 为什么是魔改
+> ### Lệnh giọng nói
 >
-> - 首个实现微信二维码配网。
-> - 首个支持单手机配网。
-> - 首个支持扫二维码访问控制台。
-> - 首发支持繁体、日文、英文版界面。
-> - 首个全语音操控模式。
-> - 独家提供一键刷机脚本等多种刷机方式。
+> - **Bật/tắt chế độ ngắt lời giọng nói (AEC)**: khi đang phát nhạc, cần tắt chế độ này để tránh làm gián đoạn nhạc.
+> - **Chuyển chế độ hiển thị màn IPS**: bản XiaoZhi Yunliao S3 mới đã nâng cấp màn IPS, cần đổi chế độ hiển thị thì mới hiển thị đúng; có thể chuyển qua lại.
 
-## 版本区别
+## Bản tùy biến
 
-> | 特性           | 官方版 | 魔改版 |
-> | -------------- | ------ | ------ |
-> | 语音打断       | ✓      | ✓      |
-> | 4G 功能        | ✓      | ✓      |
-> | 自动更新固件   | ✓      | X      |
-> | 第三方固件支持 | ✓      | X      |
-> | 天气待机界面   | X      | ✓      |
-> | 闹钟提醒       | X      | ✓      |
-> | 网络音乐播放   | X      | ✓      |
-> | 微信扫码配网   | X      | ✓      |
-> | 单手机配网     | X      | ✓      |
-> | 扫码访问控制台 | X      | ✓      |
-> | 繁日英文界面   | X      | ✓      |
-> | 多语言支持     | 需自行编译      | ✓      |
-> | 外接蓝牙音箱/耳机   | ✓      | ✓      |
+Bản tùy biến có thay đổi nền tảng khá lớn nên được duy trì code riêng và định kỳ merge từ dự án chính.
 
-# 编译配置命令
+> ### Vì sao gọi là tùy biến
+>
+> - Là bản đầu tiên hỗ trợ cấu hình Wi-Fi bằng mã QR WeChat.
+> - Là bản đầu tiên hỗ trợ cấu hình bằng một điện thoại đơn.
+> - Là bản đầu tiên hỗ trợ quét QR để vào console.
+> - Là bản đầu tiên phát hành giao diện tiếng Phồn thể, Nhật và Anh.
+> - Là bản đầu tiên hỗ trợ chế độ điều khiển hoàn toàn bằng giọng nói.
+> - Cung cấp độc quyền nhiều cách nạp firmware, gồm script nhấp một lần.
 
-**克隆工程**
+## Khác biệt phiên bản
+
+> | Tính năng       | Bản chính thức | Bản tùy biến |
+> | -------------- | -------------- | ------------ |
+> | Ngắt lời bằng giọng nói | ✓ | ✓ |
+> | 4G | ✓ | ✓ |
+> | Tự động cập nhật firmware | ✓ | X |
+> | Hỗ trợ firmware bên thứ ba | ✓ | X |
+> | Màn hình chờ thời tiết | X | ✓ |
+> | Nhắc báo thức | X | ✓ |
+> | Phát nhạc mạng | X | ✓ |
+> | Cấu hình Wi-Fi bằng QR WeChat | X | ✓ |
+> | Cấu hình bằng một điện thoại | X | ✓ |
+> | Quét mã để vào console | X | ✓ |
+> | Giao diện Phồn/ Nhật/ Anh | X | ✓ |
+> | Hỗ trợ đa ngôn ngữ | Cần tự biên dịch | ✓ |
+> | Loa/tai nghe Bluetooth ngoài | ✓ | ✓ |
+
+# Lệnh build
+
+**Clone dự án**
 
 ```bash
 git clone https://github.com/78/xiaozhi-esp32.git
 ```
 
-**进入工程**
+**Vào thư mục dự án**
 
 ```bash
 cd xiaozhi-esp32
 ```
 
-**配置编译目标为 ESP32S3**
+**Chọn target build ESP32S3**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-**打开 menuconfig**
+**Mở menuconfig**
 
 ```bash
 idf.py menuconfig
 ```
 
-**选择板子**
+**Chọn board**
 
 ```bash
-- `Xiaozhi Assistant` → `Board Type` → 选择 `小智云聊-S3` → 选择 `Enable Device-Side AEC`
+- `Xiaozhi Assistant` → `Board Type` → chọn `XiaoZhi Yunliao S3` → chọn `Enable Device-Side AEC`
 ```
 
-**编译**
+**Build**
 
-```ba
+```bash
 idf.py build
 ```
 
-**下载并打开串口终端**
+**Nạp và mở terminal serial**
 
 ```bash
 idf.py build flash monitor

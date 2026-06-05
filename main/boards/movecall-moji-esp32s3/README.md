@@ -1,25 +1,25 @@
-# 编译配置命令
+# Lệnh cấu hình biên dịch
 
-**配置编译目标为 ESP32S3：**
+**Đặt mục tiêu biên dịch là ESP32S3:**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-**打开 menuconfig：**
+**Mở menuconfig:**
 
 ```bash
 idf.py menuconfig
 ```
 
-**选择板子：**
+**Chọn bo mạch:**
 
 ```
-Xiaozhi Assistant -> Board Type -> Movecall Moji 小智AI衍生版
+Xiaozhi Assistant -> Board Type -> Movecall Moji, bản phái sinh của XiaoZhi AI
 ```
 
 
-**编译：**
+**Biên dịch:**
 
 ```bash
 idf.py build
