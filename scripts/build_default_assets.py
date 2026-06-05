@@ -636,13 +636,13 @@ def get_language_from_multinet_models(multinet_models):
     has_cn = any(any(indicator in model for indicator in cn_indicators) for model in multinet_models)
     has_en = any(any(indicator in model for indicator in en_indicators) for model in multinet_models)
     
-    # If both or neither, default to cn
+    # If both or neither, leave it unset and let runtime pick any available model.
     if has_cn and not has_en:
         return 'cn'
     elif has_en and not has_cn:
         return 'en'
     else:
-        return 'cn'  # Default to Chinese
+        return None
 
 
 def get_wakenet_model_paths(model_names, esp_sr_model_path):
@@ -895,7 +895,6 @@ def main():
         
         # Build multinet_model info structure
         multinet_model_info = {
-            "language": language,
             "duration": 3000,  # Default duration in ms
             "threshold": custom_wake_word_config['threshold'],
             "commands": [
@@ -906,8 +905,10 @@ def main():
                 }
             ]
         }
+        if language is not None:
+            multinet_model_info["language"] = language
         print(f"  custom wake word: {custom_wake_word_config['wake_word']} ({custom_wake_word_config['display']})")
-        print(f"  wake word language: {language}")
+        print(f"  wake word language: {language if language is not None else 'auto'}")
         print(f"  wake word threshold: {custom_wake_word_config['threshold']}")
     
     # Check if we have anything to build

@@ -4,6 +4,7 @@
         {
             "name": "bread-compact-wifi",
             "sdkconfig_append": [
+                "CONFIG_LANGUAGE_VI_VN=y",
                 "CONFIG_OLED_SSD1306_128X32=y"
             ]
         },

@@ -51,13 +51,24 @@ public:
             void* asset_data = nullptr;
             size_t asset_size = 0;
             if (Assets::GetInstance().GetAssetData("watch_bg_240x240.bin", asset_data, asset_size)) {
-                void* copied_data = heap_caps_malloc(asset_size, MALLOC_CAP_DEFAULT);
-                if (copied_data != nullptr) {
-                    std::memcpy(copied_data, asset_data, asset_size);
-                    background_image_ = std::make_shared<LvglAllocatedImage>(copied_data, asset_size);
-                    theme->set_background_image(background_image_);
+                if (asset_size >= 12) {
+                    auto* header = static_cast<uint8_t*>(asset_data);
+                    int color_format = header[1] & 0x1f;
+                    int width = header[4] | (header[5] << 8);
+                    int height = header[6] | (header[7] << 8);
+                    int stride = header[8] | (header[9] << 8);
+                    size_t payload_size = asset_size - 12;
+                    void* copied_data = heap_caps_malloc(payload_size, MALLOC_CAP_DEFAULT);
+                    if (copied_data != nullptr) {
+                        std::memcpy(copied_data, header + 12, payload_size);
+                        background_image_ = std::make_shared<LvglAllocatedImage>(
+                            copied_data, payload_size, width, height, stride, color_format);
+                        theme->set_background_image(background_image_);
+                    } else {
+                        ESP_LOGE(TAG, "Failed to allocate memory for watch_bg_240x240.bin");
+                    }
                 } else {
-                    ESP_LOGE(TAG, "Failed to allocate memory for watch_bg_240x240.bin");
+                    ESP_LOGE(TAG, "watch_bg_240x240.bin is too small to contain an LVGL header");
                 }
             } else {
                 ESP_LOGW(TAG, "Background image asset watch_bg_240x240.bin not found");

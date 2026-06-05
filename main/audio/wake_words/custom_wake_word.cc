@@ -35,6 +35,7 @@ CustomWakeWord::~CustomWakeWord() {
 }
 
 void CustomWakeWord::ParseWakenetModelConfig() {
+    language_.clear();
     // Read index.json
     auto& assets = Assets::GetInstance();
     void* ptr = nullptr;
@@ -56,6 +57,8 @@ void CustomWakeWord::ParseWakenetModelConfig() {
         cJSON* commands = cJSON_GetObjectItem(multinet_model, "commands");
         if (cJSON_IsString(language)) {
             language_ = language->valuestring;
+        } else {
+            language_.clear();
         }
         if (cJSON_IsNumber(duration)) {
             duration_ = duration->valueint;
@@ -87,7 +90,7 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
     commands_.clear();
 
     if (models_list == nullptr) {
-        language_ = "cn";
+        language_.clear();
         models_ = esp_srmodel_init("model");
 #ifdef CONFIG_CUSTOM_WAKE_WORD
         threshold_ = CONFIG_CUSTOM_WAKE_WORD_THRESHOLD / 100.0f;
@@ -104,10 +107,15 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
     }
 
     // 初始化 multinet (命令词识别)
-    mn_name_ = esp_srmodel_filter(models_, ESP_MN_PREFIX, language_.c_str());
-    if (mn_name_ == nullptr) {
-        ESP_LOGW(TAG, "Language '%s' multinet not found, falling back to any multinet model", language_.c_str());
+    if (language_.empty()) {
         mn_name_ = esp_srmodel_filter(models_, ESP_MN_PREFIX, NULL);
+        ESP_LOGI(TAG, "Language not specified, using any available multinet model");
+    } else {
+        mn_name_ = esp_srmodel_filter(models_, ESP_MN_PREFIX, language_.c_str());
+        if (mn_name_ == nullptr) {
+            ESP_LOGW(TAG, "Language '%s' multinet not found, falling back to any multinet model", language_.c_str());
+            mn_name_ = esp_srmodel_filter(models_, ESP_MN_PREFIX, NULL);
+        }
     }
     if (mn_name_ == nullptr) {
         ESP_LOGE(TAG, "Failed to initialize multinet, mn_name is nullptr");
