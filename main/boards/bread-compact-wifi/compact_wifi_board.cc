@@ -23,6 +23,35 @@
 
 #define TAG "CompactWifiBoard"
 
+class RoundGc9a01Display : public SpiLcdDisplay {
+public:
+    RoundGc9a01Display(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,
+                       int width, int height, int offset_x, int offset_y,
+                       bool mirror_x, bool mirror_y, bool swap_xy)
+        : SpiLcdDisplay(panel_io, panel, width, height, offset_x, offset_y, mirror_x, mirror_y, swap_xy) {}
+
+    static void RounderEventCb(lv_event_t* e) {
+        lv_area_t* area = static_cast<lv_area_t*>(lv_event_get_param(e));
+        area->x1 = (area->x1 >> 1) << 1;
+        area->y1 = (area->y1 >> 1) << 1;
+        area->x2 = ((area->x2 >> 1) << 1) + 1;
+        area->y2 = ((area->y2 >> 1) << 1) + 1;
+    }
+
+    void SetupUI() override {
+        SpiLcdDisplay::SetupUI();
+
+        DisplayLockGuard lock(this);
+        lv_obj_set_style_pad_left(top_bar_, 28, 0);
+        lv_obj_set_style_pad_right(top_bar_, 28, 0);
+        lv_obj_set_style_pad_left(status_bar_, 28, 0);
+        lv_obj_set_style_pad_right(status_bar_, 28, 0);
+        lv_obj_set_style_radius(container_, LV_RADIUS_CIRCLE, 0);
+        lv_obj_set_style_clip_corner(container_, true, 0);
+        lv_display_add_event_cb(display_, RounderEventCb, LV_EVENT_INVALIDATE_AREA, NULL);
+    }
+};
+
 class CompactWifiBoard : public WifiBoard {
 private:
     i2c_master_bus_handle_t display_i2c_bus_;
@@ -73,7 +102,7 @@ private:
         ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(panel, DISPLAY_SWAP_XY));
         ESP_ERROR_CHECK(esp_lcd_panel_mirror(panel, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y));
 
-        display_ = new SpiLcdDisplay(panel_io, panel,
+        display_ = new RoundGc9a01Display(panel_io, panel,
             DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y,
             DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
