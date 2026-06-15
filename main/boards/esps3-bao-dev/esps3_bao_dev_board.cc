@@ -54,45 +54,96 @@ public:
     void SetupUI() override {
         SpiLcdDisplay::SetupUI();
 
-        // Load background image from assets if available
+        // Load theme-specific background images from assets
         auto* theme = dynamic_cast<LvglTheme*>(GetTheme());
         if (theme == nullptr) {
             return;
         }
-        if (theme != nullptr && !background_image_loaded_) {
-            void* asset_data = nullptr;
-            size_t asset_size = 0;
-            if (Assets::GetInstance().GetAssetData("esps3_bao_dev_bg.bin", asset_data, asset_size)) {
-                if (asset_size >= 12) {
-                    auto* header = static_cast<uint8_t*>(asset_data);
+        if (!background_images_loaded_) {
+            // Load light theme background
+            void* light_data = nullptr;
+            size_t light_size = 0;
+            if (Assets::GetInstance().GetAssetData("esps3_bao_dev_bg_light.bin", light_data, light_size)) {
+                if (light_size >= 12) {
+                    auto* header = static_cast<uint8_t*>(light_data);
                     int color_format = header[1] & 0x1f;
                     int width = header[4] | (header[5] << 8);
                     int height = header[6] | (header[7] << 8);
                     int stride = header[8] | (header[9] << 8);
-                    size_t payload_size = asset_size - 12;
+                    size_t payload_size = light_size - 12;
                     void* copied_data = heap_caps_malloc(payload_size, MALLOC_CAP_DEFAULT);
                     if (copied_data != nullptr) {
                         std::memcpy(copied_data, header + 12, payload_size);
-                        background_image_ = std::make_shared<LvglAllocatedImage>(
+                        light_bg_image_ = std::make_shared<LvglAllocatedImage>(
                             copied_data, payload_size, width, height, stride, color_format);
-                        theme->set_background_image(background_image_);
-                        ESP_LOGI(TAG, "Loaded background image esps3_bao_dev_bg.bin (%dx%d)", width, height);
+                        ESP_LOGI(TAG, "Loaded light theme background esps3_bao_dev_bg_light.bin (%dx%d)", width, height);
                     } else {
-                        ESP_LOGE(TAG, "Failed to allocate memory for background image");
+                        ESP_LOGE(TAG, "Failed to allocate memory for light theme background");
                     }
                 } else {
-                    ESP_LOGE(TAG, "esps3_bao_dev_bg.bin is too small to contain an LVGL header");
+                    ESP_LOGE(TAG, "esps3_bao_dev_bg_light.bin is too small to contain an LVGL header");
                 }
             } else {
-                ESP_LOGI(TAG, "Background image asset esps3_bao_dev_bg.bin not found, using color background");
+                ESP_LOGI(TAG, "Light theme background esps3_bao_dev_bg_light.bin not found");
             }
-            background_image_loaded_ = true;
+
+            // Load dark theme background
+            void* dark_data = nullptr;
+            size_t dark_size = 0;
+            if (Assets::GetInstance().GetAssetData("esps3_bao_dev_bg_dark.bin", dark_data, dark_size)) {
+                if (dark_size >= 12) {
+                    auto* header = static_cast<uint8_t*>(dark_data);
+                    int color_format = header[1] & 0x1f;
+                    int width = header[4] | (header[5] << 8);
+                    int height = header[6] | (header[7] << 8);
+                    int stride = header[8] | (header[9] << 8);
+                    size_t payload_size = dark_size - 12;
+                    void* copied_data = heap_caps_malloc(payload_size, MALLOC_CAP_DEFAULT);
+                    if (copied_data != nullptr) {
+                        std::memcpy(copied_data, header + 12, payload_size);
+                        dark_bg_image_ = std::make_shared<LvglAllocatedImage>(
+                            copied_data, payload_size, width, height, stride, color_format);
+                        ESP_LOGI(TAG, "Loaded dark theme background esps3_bao_dev_bg_dark.bin (%dx%d)", width, height);
+                    } else {
+                        ESP_LOGE(TAG, "Failed to allocate memory for dark theme background");
+                    }
+                } else {
+                    ESP_LOGE(TAG, "esps3_bao_dev_bg_dark.bin is too small to contain an LVGL header");
+                }
+            } else {
+                ESP_LOGI(TAG, "Dark theme background esps3_bao_dev_bg_dark.bin not found");
+            }
+
+            // Apply the currently active theme's background
+            std::string theme_name = theme->name();
+            if (theme_name == "light" && light_bg_image_ != nullptr) {
+                theme->set_background_image(light_bg_image_);
+            } else if (theme_name == "dark" && dark_bg_image_ != nullptr) {
+                theme->set_background_image(dark_bg_image_);
+            }
+            background_images_loaded_ = true;
+        }
+    }
+
+    // Apply the correct background image when theme changes
+    void SetTheme(Theme* theme) override {
+        LcdDisplay::SetTheme(theme);
+        auto* lvgl_theme = dynamic_cast<LvglTheme*>(theme);
+        if (lvgl_theme == nullptr) {
+            return;
+        }
+        std::string theme_name = lvgl_theme->name();
+        if (theme_name == "light" && light_bg_image_ != nullptr) {
+            lvgl_theme->set_background_image(light_bg_image_);
+        } else if (theme_name == "dark" && dark_bg_image_ != nullptr) {
+            lvgl_theme->set_background_image(dark_bg_image_);
         }
     }
 
 private:
-    std::shared_ptr<LvglImage> background_image_ = nullptr;
-    bool background_image_loaded_ = false;
+    std::shared_ptr<LvglImage> light_bg_image_ = nullptr;
+    std::shared_ptr<LvglImage> dark_bg_image_ = nullptr;
+    bool background_images_loaded_ = false;
 };
 
 class Esps3BaoDevBoard : public WifiBoard {

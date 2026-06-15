@@ -1,6 +1,6 @@
 # Bo mạch ESP-S3-BAO
 
-Bo mạch phát triển ESP32-S3, được kế thừa từ bo mạch Quandong ESP32-S3 (quandong-s3-dev), hỗ trợ hình nền LVGL tùy chỉnh.
+Bo mạch phát triển ESP32-S3, được kế thừa từ bo mạch Quandong ESP32-S3 (quandong-s3-dev), hỗ trợ hình nền LVGL tùy chỉnh riêng cho từng chế độ sáng và tối.
 
 ## Thông số phần cứng
 
@@ -24,12 +24,15 @@ idf.py build
 
 ## Hình nền tùy chỉnh
 
-Bo mạch này hỗ trợ giao diện người dùng tùy chỉnh thông qua hình nền LVGL (áp dụng cho cả chế độ sáng và tối).
+Bo mạch này hỗ trợ hình nền riêng cho **chế độ sáng** và **chế độ tối**, cho phép giao diện tối ưu cho từng điều kiện ánh sáng.
 
 ### 1. Chuẩn bị hình ảnh
 
 - Kích thước: **240×320** (dọc)
 - Định dạng: **PNG** (khuyến nghị)
+- Tạo 2 file:
+  - `background_light.png` — hình nền cho chế độ sáng (nền sáng, chữ đậm)
+  - `background_dark.png` — hình nền cho chế độ tối (nền tối, chữ sáng)
 
 ### 2. Cài đặt công cụ chuyển đổi
 
@@ -40,18 +43,26 @@ pip3 install pypng lz4
 ### 3. Chuyển đổi hình ảnh
 
 ```bash
+# Chuyển đổi hình nền chế độ sáng
 python3 scripts/Image_Converter/LVGLImage.py \
-    -i your_background.png \
-    -o esps3_bao_dev_bg.bin \
+    -i background_light.png \
+    -o esps3_bao_dev_bg_light.bin \
+    -f RGB565
+
+# Chuyển đổi hình nền chế độ tối
+python3 scripts/Image_Converter/LVGLImage.py \
+    -i background_dark.png \
+    -o esps3_bao_dev_bg_dark.bin \
     -f RGB565
 ```
 
 ### 4. Đặt file
 
-Sao chép file `esps3_bao_dev_bg.bin` vừa tạo vào thư mục:
+Sao chép các file vừa tạo vào thư mục:
 
 ```
-main/assets/common/esps3_bao_dev_bg.bin
+main/assets/common/esps3_bao_dev_bg_light.bin   # Chế độ sáng
+main/assets/common/esps3_bao_dev_bg_dark.bin    # Chế độ tối
 ```
 
 ### 5. Xây dựng lại
@@ -62,7 +73,7 @@ idf.py build && idf.py flash
 
 ### Hoàn nguyên về màu nền mặc định
 
-Xóa file `main/assets/common/esps3_bao_dev_bg.bin` để tự động hoàn nguyên về màu nền mặc định (chế độ sáng `#FFFFFF` / chế độ tối `#000000`).
+Xóa cả hai file `esps3_bao_dev_bg_light.bin` và `esps3_bao_dev_bg_dark.bin` để tự động hoàn nguyên về màu nền mặc định (chế độ sáng `#FFFFFF` / chế độ tối `#000000`).
 
 ### Thay đổi màu nền mặc định
 
