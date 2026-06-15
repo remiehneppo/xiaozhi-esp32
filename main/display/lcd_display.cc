@@ -38,6 +38,7 @@ void LcdDisplay::InitializeLcdThemes() {
     light_theme->set_system_text_color(lv_color_hex(0x000000));
     light_theme->set_border_color(lv_color_hex(0x000000));
     light_theme->set_low_battery_color(lv_color_hex(0x000000));
+    light_theme->set_message_opacity(153);
     light_theme->set_text_font(text_font);
     light_theme->set_icon_font(icon_font);
     light_theme->set_large_icon_font(large_icon_font);
@@ -53,6 +54,7 @@ void LcdDisplay::InitializeLcdThemes() {
     dark_theme->set_system_text_color(lv_color_hex(0xFFFFFF));
     dark_theme->set_border_color(lv_color_hex(0xFFFFFF));
     dark_theme->set_low_battery_color(lv_color_hex(0xFF0000));
+    dark_theme->set_message_opacity(204);
     dark_theme->set_text_font(text_font);
     dark_theme->set_icon_font(icon_font);
     dark_theme->set_large_icon_font(large_icon_font);
@@ -604,7 +606,7 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
     if (strcmp(role, "user") == 0) {
         // User messages are right-aligned with green background
         lv_obj_set_style_bg_color(msg_bubble, lvgl_theme->user_bubble_color(), 0);
-        lv_obj_set_style_bg_opa(msg_bubble, LV_OPA_70, 0);
+        lv_obj_set_style_bg_opa(msg_bubble, lvgl_theme->message_opacity(), 0);
         // Set text color for contrast
         lv_obj_set_style_text_color(msg_text, lvgl_theme->text_color(), 0);
         
@@ -620,7 +622,7 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
     } else if (strcmp(role, "assistant") == 0) {
         // Assistant messages are left-aligned with white background
         lv_obj_set_style_bg_color(msg_bubble, lvgl_theme->assistant_bubble_color(), 0);
-        lv_obj_set_style_bg_opa(msg_bubble, LV_OPA_70, 0);
+        lv_obj_set_style_bg_opa(msg_bubble, lvgl_theme->message_opacity(), 0);
         // Set text color for contrast
         lv_obj_set_style_text_color(msg_text, lvgl_theme->text_color(), 0);
         
@@ -636,7 +638,7 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
     } else if (strcmp(role, "system") == 0) {
         // System messages are center-aligned with light gray background
         lv_obj_set_style_bg_color(msg_bubble, lvgl_theme->system_bubble_color(), 0);
-        lv_obj_set_style_bg_opa(msg_bubble, LV_OPA_70, 0);
+        lv_obj_set_style_bg_opa(msg_bubble, lvgl_theme->message_opacity(), 0);
         // Set text color for contrast
         lv_obj_set_style_text_color(msg_text, lvgl_theme->system_text_color(), 0);
         
@@ -717,7 +719,7 @@ void LcdDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
     
     // Set image bubble background color (similar to system message)
     lv_obj_set_style_bg_color(img_bubble, lvgl_theme->assistant_bubble_color(), 0);
-    lv_obj_set_style_bg_opa(img_bubble, LV_OPA_70, 0);
+    lv_obj_set_style_bg_opa(img_bubble, lvgl_theme->message_opacity(), 0);
     
     // Set custom attribute to mark bubble type
     lv_obj_set_user_data(img_bubble, (void*)"image");
@@ -1250,6 +1252,9 @@ void LcdDisplay::SetTheme(Theme* theme) {
             
             // Update border color
             lv_obj_set_style_border_color(bubble, lvgl_theme->border_color(), 0);
+            
+            // Update message bubble opacity
+            lv_obj_set_style_bg_opa(bubble, lvgl_theme->message_opacity(), 0);
             
             // Update text color for the message
             if (lv_obj_get_child_cnt(bubble) > 0) {

@@ -27,6 +27,7 @@ public:
     inline lv_color_t system_text_color() const { return system_text_color_; }
     inline lv_color_t border_color() const { return border_color_; }
     inline lv_color_t low_battery_color() const { return low_battery_color_; }
+    inline uint8_t message_opacity() const { return message_opacity_; }
     inline std::shared_ptr<LvglImage> background_image() const { return background_image_; }
     inline std::shared_ptr<EmojiCollection> emoji_collection() const { return emoji_collection_; }
     inline std::shared_ptr<LvglFont> text_font() const { return text_font_; }
@@ -43,6 +44,7 @@ public:
     inline void set_system_text_color(lv_color_t system_text) { system_text_color_ = system_text; }
     inline void set_border_color(lv_color_t border) { border_color_ = border; }
     inline void set_low_battery_color(lv_color_t low_battery) { low_battery_color_ = low_battery; }
+    inline void set_message_opacity(uint8_t opacity) { message_opacity_ = opacity; }
     inline void set_background_image(std::shared_ptr<LvglImage> background_image) { background_image_ = background_image; }
     inline void set_emoji_collection(std::shared_ptr<EmojiCollection> emoji_collection) { emoji_collection_ = emoji_collection; }
     inline void set_text_font(std::shared_ptr<LvglFont> text_font) { text_font_ = text_font; }
@@ -51,6 +53,9 @@ public:
 
 private:
     int spacing_ = 2;
+
+    // Message bubble opacity (0=fully transparent, 255=fully opaque)
+    uint8_t message_opacity_ = 128;
 
     // Colors
     lv_color_t background_color_;
