@@ -114,30 +114,39 @@ public:
                 ESP_LOGI(TAG, "Dark theme background esps3_bao_dev_bg_dark.bin not found");
             }
 
-            // Apply the currently active theme's background
+            // Set the correct image on the theme BEFORE calling SetTheme()
+            // so the parent SetTheme() picks it up immediately
             std::string theme_name = theme->name();
             if (theme_name == "light" && light_bg_image_ != nullptr) {
                 theme->set_background_image(light_bg_image_);
             } else if (theme_name == "dark" && dark_bg_image_ != nullptr) {
                 theme->set_background_image(dark_bg_image_);
             }
+            // Apply immediately so background image appears on first boot
+            SetTheme(theme);
             background_images_loaded_ = true;
         }
     }
 
-    // Apply the correct background image when theme changes
+    // Apply the correct background image when theme changes at runtime
     void SetTheme(Theme* theme) override {
-        LcdDisplay::SetTheme(theme);
         auto* lvgl_theme = dynamic_cast<LvglTheme*>(theme);
         if (lvgl_theme == nullptr) {
+            LcdDisplay::SetTheme(theme);
             return;
         }
+
+        // Set the correct background image on the theme BEFORE calling parent.
+        // LcdDisplay::SetTheme() reads lvgl_theme->background_image() to update LVGL,
+        // so the image must be set first.
         std::string theme_name = lvgl_theme->name();
         if (theme_name == "light" && light_bg_image_ != nullptr) {
             lvgl_theme->set_background_image(light_bg_image_);
         } else if (theme_name == "dark" && dark_bg_image_ != nullptr) {
             lvgl_theme->set_background_image(dark_bg_image_);
         }
+
+        LcdDisplay::SetTheme(theme);
     }
 
 private:
