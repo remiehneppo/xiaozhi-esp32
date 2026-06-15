@@ -7,6 +7,7 @@
 #include "config.h"
 #include "assets.h"
 #include "display/lvgl_display/lvgl_image.h"
+#include "display/lvgl_display/lvgl_theme.h"
 
 #include <esp_log.h>
 #include <esp_lcd_panel_vendor.h>
@@ -54,7 +55,10 @@ public:
         SpiLcdDisplay::SetupUI();
 
         // Load background image from assets if available
-        auto* theme = static_cast<LvglTheme*>(GetTheme());
+        auto* theme = dynamic_cast<LvglTheme*>(GetTheme());
+        if (theme == nullptr) {
+            return;
+        }
         if (theme != nullptr && !background_image_loaded_) {
             void* asset_data = nullptr;
             size_t asset_size = 0;
@@ -210,6 +214,7 @@ public:
             AUDIO_I2S_GPIO_WS,
             AUDIO_I2S_GPIO_DOUT,
             AUDIO_I2S_GPIO_DIN,
+            AUDIO_CODEC_PA_PIN,
             AUDIO_CODEC_ES8311_ADDR,
             true,
             true);

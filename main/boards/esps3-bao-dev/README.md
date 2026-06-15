@@ -1,43 +1,43 @@
-# ESP-S3-BAO
+# Bo mạch ESP-S3-BAO
 
-ESP32-S3 开发板，基于全动 ESP32-S3 开发板（quandong-s3-dev）移植，支持 LVGL 自定义背景图片。
+Bo mạch phát triển ESP32-S3, được kế thừa từ bo mạch Quandong ESP32-S3 (quandong-s3-dev), hỗ trợ hình nền LVGL tùy chỉnh.
 
-## 硬件规格
+## Thông số phần cứng
 
-| 项目 | 参数 |
+| Thành phần | Thông số |
 |---|---|
-| SoC | ESP32-S3 |
-| 屏幕 | ILI9341 240×320 SPI |
-| 音频 | ES8311 + PCA9557 |
-| 按键 | BOOT (GPIO0) |
-| 背光 | GPIO45 |
+| Vi xử lý | ESP32-S3 |
+| Màn hình | ILI9341 240×320 SPI |
+| Âm thanh | ES8311 + PCA9557 |
+| Nút bấm | BOOT (GPIO0) |
+| Đèn nền | GPIO45 |
 | I2C SDA | GPIO16 |
 | I2C SCL | GPIO15 |
 
-## 构建
+## Xây dựng
 
 ```bash
 idf.py set-target esp32s3
-idf.py menuconfig → Component config → XiaoZhi → BOARD_TYPE → ESP-S3-BAO
+idf.py menuconfig → Component config → XiaoZhi → BOARD_TYPE → ESP-S3-BAO 开发板
 idf.py build
 ```
 
-## 自定义背景图片
+## Hình nền tùy chỉnh
 
-本板支持通过 LVGL 背景图片自定义界面外观（同时适用于亮色/暗色主题）。
+Bo mạch này hỗ trợ giao diện người dùng tùy chỉnh thông qua hình nền LVGL (áp dụng cho cả chế độ sáng và tối).
 
-### 1. 准备图片
+### 1. Chuẩn bị hình ảnh
 
-- 尺寸：**240×320**（竖屏）
-- 格式：**PNG**（推荐）
+- Kích thước: **240×320** (dọc)
+- Định dạng: **PNG** (khuyến nghị)
 
-### 2. 安装转换工具依赖
+### 2. Cài đặt công cụ chuyển đổi
 
 ```bash
 pip3 install pypng lz4
 ```
 
-### 3. 转换图片
+### 3. Chuyển đổi hình ảnh
 
 ```bash
 python3 scripts/Image_Converter/LVGLImage.py \
@@ -46,32 +46,32 @@ python3 scripts/Image_Converter/LVGLImage.py \
     -f RGB565
 ```
 
-### 4. 放置文件
+### 4. Đặt file
 
-将生成的 `esps3_bao_dev_bg.bin` 复制到：
+Sao chép file `esps3_bao_dev_bg.bin` vừa tạo vào thư mục:
 
 ```
 main/assets/common/esps3_bao_dev_bg.bin
 ```
 
-### 5. 重新构建
+### 5. Xây dựng lại
 
 ```bash
 idf.py build && idf.py flash
 ```
 
-### 回退到纯色背景
+### Hoàn nguyên về màu nền mặc định
 
-删除 `main/assets/common/esps3_bao_dev_bg.bin` 即可自动回退到纯色背景（亮色 `#FFFFFF` / 暗色 `#000000`）。
+Xóa file `main/assets/common/esps3_bao_dev_bg.bin` để tự động hoàn nguyên về màu nền mặc định (chế độ sáng `#FFFFFF` / chế độ tối `#000000`).
 
-### 修改纯色背景颜色
+### Thay đổi màu nền mặc định
 
-编辑 `main/display/lcd_display.cc` 中 `InitializeLcdThemes()` 函数：
+Chỉnh sửa hàm `InitializeLcdThemes()` trong file `main/display/lcd_display.cc`:
 
 ```cpp
-// 亮色主题
+// Chế độ sáng
 light_theme->set_background_color(lv_color_hex(0xFFFFFF));
 
-// 暗色主题
+// Chế độ tối
 dark_theme->set_background_color(lv_color_hex(0x000000));
 ```
