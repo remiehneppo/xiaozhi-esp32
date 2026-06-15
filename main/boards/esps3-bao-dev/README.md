@@ -1,4 +1,4 @@
-# ESP-S3-BAO 开发板
+# ESP-S3-BAO
 
 ESP32-S3 开发板，基于全动 ESP32-S3 开发板（quandong-s3-dev）移植，支持 LVGL 自定义背景图片。
 
@@ -18,7 +18,7 @@ ESP32-S3 开发板，基于全动 ESP32-S3 开发板（quandong-s3-dev）移植�
 
 ```bash
 idf.py set-target esp32s3
-idf.py menuconfig → Component config → XiaoZhi → BOARD_TYPE → ESP-S3-BAO 开发板
+idf.py menuconfig → Component config → XiaoZhi → BOARD_TYPE → ESP-S3-BAO
 idf.py build
 ```
 

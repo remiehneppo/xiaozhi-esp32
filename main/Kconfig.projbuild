@@ -247,7 +247,7 @@ choice BOARD_TYPE
         bool "全动 ESP32-S3 开发板"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESPS3_BAO_DEV
-        bool "ESP-S3-BAO 开发板"
+        bool "ESP-S3-BAO"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_LICHUANG_DEV_C3
         bool "立创·实战派 ESP32-C3"
