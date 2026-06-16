@@ -291,14 +291,8 @@ private:
             return;
         }
 
-        auto& app = Application::GetInstance();
-        if (app.GetDeviceState() == kDeviceStateListening) {
-            ESP_LOGI(TAG, "Double tap detected, stop listening");
-            app.StopListening();
-        } else {
-            ESP_LOGI(TAG, "Double tap detected, start listening");
-            app.StartListening();
-        }
+        ESP_LOGI(TAG, "Double tap detected, toggle chat state");
+        Application::GetInstance().ToggleChatState();
     }
 
     void InitializeTouch() {
