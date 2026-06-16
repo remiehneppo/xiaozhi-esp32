@@ -14,6 +14,9 @@
 #include <esp_heap_caps.h>
 #include <driver/i2c_master.h>
 #include <driver/spi_common.h>
+#include <esp_lcd_touch_ft5x06.h>
+#include <esp_lvgl_port.h>
+#include <lvgl.h>
 #include <cstring>
 
 #define TAG "Esps3BaoDevBoard"
@@ -267,12 +270,59 @@ private:
             DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
 
+    void InitializeTouch() {
+        esp_lcd_touch_handle_t tp = nullptr;
+        esp_lcd_touch_config_t tp_cfg = {
+            .x_max = DISPLAY_WIDTH,
+            .y_max = DISPLAY_HEIGHT,
+            .rst_gpio_num = TOUCH_RESET_PIN,
+            .int_gpio_num = TOUCH_INTERRUPT_PIN,
+            .levels = {
+                .reset = 0,
+                .interrupt = 0,
+            },
+            .flags = {
+                .swap_xy = DISPLAY_SWAP_XY,
+                .mirror_x = DISPLAY_MIRROR_X,
+                .mirror_y = DISPLAY_MIRROR_Y,
+            },
+        };
+
+        esp_lcd_panel_io_handle_t tp_io_handle = nullptr;
+        esp_lcd_panel_io_i2c_config_t tp_io_config = {
+            .dev_addr = ESP_LCD_TOUCH_IO_I2C_FT5x06_ADDRESS,
+            .control_phase_bytes = 1,
+            .dc_bit_offset = 0,
+            .lcd_cmd_bits = 8,
+            .flags = {
+                .disable_control_phase = 1,
+            },
+        };
+        tp_io_config.scl_speed_hz = 400 * 1000;
+
+        ESP_LOGI(TAG, "Initialize D-FT6336G touch controller");
+        ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c(codec_i2c_bus_, &tp_io_config, &tp_io_handle));
+        ESP_ERROR_CHECK(esp_lcd_touch_new_i2c_ft5x06(tp_io_handle, &tp_cfg, &tp));
+
+        const lvgl_port_touch_cfg_t touch_cfg = {
+            .disp = lv_display_get_default(),
+            .handle = tp,
+        };
+        if (touch_cfg.disp != nullptr) {
+            lvgl_port_add_touch(&touch_cfg);
+            ESP_LOGI(TAG, "Touch panel initialized successfully");
+        } else {
+            ESP_LOGE(TAG, "Touch display is not initialized");
+        }
+    }
+
 public:
     Esps3BaoDevBoard() : boot_button_(BOOT_BUTTON_GPIO) {
         InitializeI2c();
         InitializeSpi();
         InitializeAudioPaEnable();
         InitializeIli9341Display();
+        InitializeTouch();
         InitializeButtons();
         GetBacklight()->SetBrightness(100);
     }
