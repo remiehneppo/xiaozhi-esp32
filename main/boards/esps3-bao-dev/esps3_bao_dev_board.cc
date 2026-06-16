@@ -57,9 +57,12 @@ public:
         // Load theme-specific background images from assets
         auto* theme = dynamic_cast<LvglTheme*>(GetTheme());
         if (theme == nullptr) {
+            ESP_LOGW(TAG, "Theme is not LVGL-based, background images will not be applied");
             return;
         }
         if (!background_images_loaded_) {
+            bool light_loaded = false;
+            bool dark_loaded = false;
             // Load light theme background
             void* light_data = nullptr;
             size_t light_size = 0;
@@ -77,6 +80,7 @@ public:
                         light_bg_image_ = std::make_shared<LvglAllocatedImage>(
                             copied_data, payload_size, width, height, stride, color_format);
                         ESP_LOGI(TAG, "Loaded light theme background esps3_bao_dev_bg_light.bin (%dx%d)", width, height);
+                        light_loaded = true;
                     } else {
                         ESP_LOGE(TAG, "Failed to allocate memory for light theme background");
                     }
@@ -104,6 +108,7 @@ public:
                         dark_bg_image_ = std::make_shared<LvglAllocatedImage>(
                             copied_data, payload_size, width, height, stride, color_format);
                         ESP_LOGI(TAG, "Loaded dark theme background esps3_bao_dev_bg_dark.bin (%dx%d)", width, height);
+                        dark_loaded = true;
                     } else {
                         ESP_LOGE(TAG, "Failed to allocate memory for dark theme background");
                     }
@@ -122,6 +127,11 @@ public:
             } else if (theme_name == "dark" && dark_bg_image_ != nullptr) {
                 theme->set_background_image(dark_bg_image_);
             }
+            ESP_LOGI(TAG, "Background image load status: light=%s dark=%s active_theme=%s",
+                     light_loaded ? "loaded" : "missing",
+                     dark_loaded ? "loaded" : "missing",
+                     theme_name.c_str());
+
             // Apply immediately so background image appears on first boot
             SetTheme(theme);
             background_images_loaded_ = true;
@@ -142,8 +152,12 @@ public:
         std::string theme_name = lvgl_theme->name();
         if (theme_name == "light" && light_bg_image_ != nullptr) {
             lvgl_theme->set_background_image(light_bg_image_);
+            ESP_LOGI(TAG, "Applying light background image to theme");
         } else if (theme_name == "dark" && dark_bg_image_ != nullptr) {
             lvgl_theme->set_background_image(dark_bg_image_);
+            ESP_LOGI(TAG, "Applying dark background image to theme");
+        } else {
+            ESP_LOGW(TAG, "No background image available for theme %s", theme_name.c_str());
         }
 
         LcdDisplay::SetTheme(theme);

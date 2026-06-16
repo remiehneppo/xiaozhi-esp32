@@ -167,6 +167,9 @@ elseif(CONFIG_BOARD_TYPE_ESPS3_BAO_DEV)
     set(BUILTIN_TEXT_FONT font_noto_basic_20_4)
     set(BUILTIN_ICON_FONT font_awesome_20_4)
     set(DEFAULT_EMOJI_COLLECTION noto-emoji_128)
+    # Board-specific background binaries live in assets/common and must be
+    # copied into the generated assets partition for SetupUI() to load them.
+    set(DEFAULT_ASSETS_EXTRA_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/common")
 elseif(CONFIG_BOARD_TYPE_LICHUANG_DEV_C3)
     set(BOARD_TYPE "lichuang-c3-dev")
     set(BUILTIN_TEXT_FONT font_puhui_basic_20_4)
