@@ -174,9 +174,12 @@ private:
 
 class Esps3BaoDevBoard : public WifiBoard {
 private:
+    static constexpr uint8_t kDoubleTapClickCount = 2;
+
     i2c_master_bus_handle_t codec_i2c_bus_;
     Button boot_button_;
     Esps3BaoDevDisplay* display_ = nullptr;
+    lv_indev_t* touch_indev_ = nullptr;
 
     void InitializeI2c() {
         i2c_master_bus_config_t i2c_bus_cfg = {
@@ -270,6 +273,34 @@ private:
             DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
 
+    static void TouchEventCallback(lv_event_t* event) {
+        auto* board = static_cast<Esps3BaoDevBoard*>(lv_event_get_user_data(event));
+        if (board == nullptr) {
+            return;
+        }
+        board->HandleTouchEvent(event);
+    }
+
+    void HandleTouchEvent(lv_event_t* event) {
+        if (lv_event_get_code(event) != LV_EVENT_RELEASED) {
+            return;
+        }
+
+        auto* indev = static_cast<lv_indev_t*>(lv_event_get_target(event));
+        if (indev == nullptr || lv_indev_get_short_click_streak(indev) % kDoubleTapClickCount != 0) {
+            return;
+        }
+
+        auto& app = Application::GetInstance();
+        if (app.GetDeviceState() == kDeviceStateListening) {
+            ESP_LOGI(TAG, "Double tap detected, stop listening");
+            app.StopListening();
+        } else {
+            ESP_LOGI(TAG, "Double tap detected, start listening");
+            app.StartListening();
+        }
+    }
+
     void InitializeTouch() {
         esp_lcd_touch_handle_t tp = nullptr;
         esp_lcd_touch_config_t tp_cfg = {
@@ -309,7 +340,10 @@ private:
             .handle = tp,
         };
         if (touch_cfg.disp != nullptr) {
-            lvgl_port_add_touch(&touch_cfg);
+            touch_indev_ = lvgl_port_add_touch(&touch_cfg);
+            if (touch_indev_ != nullptr) {
+                lv_indev_add_event_cb(touch_indev_, TouchEventCallback, LV_EVENT_RELEASED, this);
+            }
             ESP_LOGI(TAG, "Touch panel initialized successfully");
         } else {
             ESP_LOGE(TAG, "Touch display is not initialized");
