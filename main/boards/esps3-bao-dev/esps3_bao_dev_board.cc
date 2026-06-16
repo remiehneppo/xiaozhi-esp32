@@ -282,7 +282,7 @@ private:
     }
 
     void HandleTouchEvent(lv_event_t* event) {
-        if (lv_event_get_code(event) != LV_EVENT_RELEASED) {
+        if (lv_event_get_code(event) != LV_EVENT_CLICKED) {
             return;
         }
 
@@ -342,7 +342,7 @@ private:
         if (touch_cfg.disp != nullptr) {
             touch_indev_ = lvgl_port_add_touch(&touch_cfg);
             if (touch_indev_ != nullptr) {
-                lv_indev_add_event_cb(touch_indev_, TouchEventCallback, LV_EVENT_RELEASED, this);
+                lv_indev_add_event_cb(touch_indev_, TouchEventCallback, LV_EVENT_CLICKED, this);
             }
             ESP_LOGI(TAG, "Touch panel initialized successfully");
         } else {
