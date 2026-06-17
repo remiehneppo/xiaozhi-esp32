@@ -58,13 +58,14 @@ Package the custom asset image:
 ```bash
 python scripts/build_default_assets.py \
   --sdkconfig sdkconfig \
+  --builtin_text_font font_noto_basic_20_4 \
   --emoji_collection my_emoji \
   --xiaozhi_fonts_path /tmp/xiaozhi-custom-fonts \
   --extra_files main/assets/common \
   --output main/assets/custom/my_emoji_assets.bin
 ```
 
-`--extra_files main/assets/common` is required for `esps3-bao-dev` because the board loads its background binaries from the assets partition.
+`--builtin_text_font font_noto_basic_20_4` keeps the LVGL text font in custom assets, including Vietnamese glyphs such as `ư`, `ơ`, `ô`, and `â`. `--extra_files main/assets/common` is required for `esps3-bao-dev` because the board loads its background binaries from the assets partition.
 
 ## Firmware Configuration
 
@@ -81,7 +82,7 @@ CONFIG_CUSTOM_ASSETS_FILE="assets/custom/my_emoji_assets.bin"
 Check that the asset image contains the expected index entries:
 
 ```bash
-strings main/assets/custom/my_emoji_assets.bin | rg "emoji_collection|happy.gif|neutral.gif|thinking.gif|esps3_bao_dev_bg_light.bin|srmodels.bin"
+strings main/assets/custom/my_emoji_assets.bin | rg "text_font|font_noto_qwen_20_4.bin|emoji_collection|happy.gif|neutral.gif|thinking.gif|esps3_bao_dev_bg_light.bin|srmodels.bin"
 ```
 
 Build the firmware:

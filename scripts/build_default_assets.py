@@ -683,7 +683,7 @@ def get_multinet_model_paths(model_names, esp_sr_model_path):
     return valid_paths
 
 
-def get_text_font_path(builtin_text_font, xiaozhi_fonts_path):
+def get_text_font_path(builtin_text_font, xiaozhi_fonts_path, project_root=None):
     """
     Get the text font path if needed
     Returns the font file path or None if no font is needed
@@ -697,13 +697,26 @@ def get_text_font_path(builtin_text_font, xiaozhi_fonts_path):
         font_name = builtin_text_font.replace('basic', 'qwen') + '.bin'
     else:
         font_name = builtin_text_font.replace('basic', 'common') + '.bin'
-    font_path = os.path.join(xiaozhi_fonts_path, 'cbin', font_name)
-    
-    if os.path.exists(font_path):
-        return font_path
-    else:
-        print(f"Warning: Font file not found: {font_path}")
-        return None
+
+    candidate_roots = [xiaozhi_fonts_path]
+    if project_root:
+        candidate_roots.extend([
+            os.path.join(project_root, "managed_components", "78__xiaozhi-fonts"),
+            os.path.join(project_root, "components", "xiaozhi-fonts"),
+        ])
+
+    seen_roots = set()
+    for font_root in candidate_roots:
+        if not font_root or font_root in seen_roots:
+            continue
+        seen_roots.add(font_root)
+
+        font_path = os.path.join(font_root, 'cbin', font_name)
+        if os.path.exists(font_path):
+            return font_path
+
+    print(f"Warning: Font file not found: {font_name}")
+    return None
 
 
 def get_emoji_collection_path(default_emoji_collection, xiaozhi_fonts_path, project_root=None):
@@ -819,18 +832,17 @@ def main():
     parser.add_argument('--extra_files', help='Path to extra files directory to be included in assets')
     
     args = parser.parse_args()
+
+    # Calculate project root from script location
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
     
     # Set default paths if not provided
-    if not args.esp_sr_model_path or not args.xiaozhi_fonts_path:
-        # Calculate project root from script location
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(script_dir)
-        
-        if not args.esp_sr_model_path:
-            args.esp_sr_model_path = os.path.join(project_root, "managed_components", "espressif__esp-sr", "model")
-        
-        if not args.xiaozhi_fonts_path:
-            args.xiaozhi_fonts_path = os.path.join(project_root, "components", "xiaozhi-fonts")
+    if not args.esp_sr_model_path:
+        args.esp_sr_model_path = os.path.join(project_root, "managed_components", "espressif__esp-sr", "model")
+    
+    if not args.xiaozhi_fonts_path:
+        args.xiaozhi_fonts_path = os.path.join(project_root, "components", "xiaozhi-fonts")
     
     print("Building default assets...")
     print(f"  sdkconfig: {args.sdkconfig}")
@@ -874,12 +886,9 @@ def main():
         print(f"  multinet models: {', '.join(multinet_model_names)} (will be packaged)")
     
     # Get text font path if needed
-    text_font_path = get_text_font_path(args.builtin_text_font, args.xiaozhi_fonts_path)
+    text_font_path = get_text_font_path(args.builtin_text_font, args.xiaozhi_fonts_path, project_root)
     
     # Get emoji collection path if needed
-    # Calculate project root from script location for otto-gif support
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(script_dir)
     emoji_collection_path = get_emoji_collection_path(args.emoji_collection, args.xiaozhi_fonts_path, project_root)
     
     # Get extra files path if provided
