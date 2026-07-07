@@ -18,6 +18,35 @@
 LV_FONT_DECLARE(BUILTIN_TEXT_FONT);
 LV_FONT_DECLARE(BUILTIN_ICON_FONT);
 
+namespace {
+
+void ConfigureWrapLabel(lv_obj_t* label, const lv_font_t* font, int32_t width, lv_text_align_t align = LV_TEXT_ALIGN_LEFT) {
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_width(label, width);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(label, align, 0);
+}
+
+void ConfigureDotLabel(lv_obj_t* label, const lv_font_t* font, int32_t width, lv_text_align_t align = LV_TEXT_ALIGN_CENTER) {
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_width(label, width);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+    lv_obj_set_style_text_align(label, align, 0);
+}
+
+void ConfigureScrollLabel(lv_obj_t* label, const lv_font_t* font, int32_t width, lv_text_align_t align = LV_TEXT_ALIGN_CENTER) {
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_width(label, width);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_style_text_align(label, align, 0);
+}
+
+void ConfigureButtonLabel(lv_obj_t* label, const lv_font_t* font) {
+    ConfigureDotLabel(label, font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+}
+
+} // namespace
+
 LvglTouchUi::LvglTouchUi(Display* display) : TouchUi(display) {
     esp_timer_create_args_t notification_timer_args = {
         .callback = &LvglTouchUi::NotificationTimerCallback,
@@ -115,14 +144,22 @@ void LvglTouchUi::CreateStatusBar() {
 
     // Left: WiFi Strength
     wifi_icon = lv_label_create(top_bar);
+    lv_obj_set_width(wifi_icon, 28);
+    lv_obj_set_style_text_align(wifi_icon, LV_TEXT_ALIGN_LEFT, 0);
     lv_label_set_text(wifi_icon, FONT_AWESOME_WIFI_SLASH);
 
     // Center: System clock
     time_label = lv_label_create(top_bar);
+    lv_obj_set_flex_grow(time_label, 1);
+    lv_label_set_long_mode(time_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_style_text_align(time_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_text(time_label, "--:--");
 
     // Right: Battery
     battery_icon = lv_label_create(top_bar);
+    lv_obj_set_width(battery_icon, 82);
+    lv_label_set_long_mode(battery_icon, LV_LABEL_LONG_DOT);
+    lv_obj_set_style_text_align(battery_icon, LV_TEXT_ALIGN_RIGHT, 0);
     lv_label_set_text(battery_icon, FONT_AWESOME_BATTERY_HALF " --%");
 
     ApplyStatusBarTheme();
@@ -221,10 +258,10 @@ void LvglTouchUi::ShowMainGridPage() {
     // Helper to create grid button item
     auto create_grid_button = [&](int col, int row, const char* icon, const char* label, lv_event_cb_t cb) {
         lv_obj_t* btn_container = lv_obj_create(grid);
-        lv_obj_set_grid_cell(btn_container, LV_GRID_ALIGN_CENTER, col, 1, LV_GRID_ALIGN_CENTER, row, 1);
-        lv_obj_set_size(btn_container, 70, 90);
+        lv_obj_set_grid_cell(btn_container, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
+        lv_obj_set_size(btn_container, LV_PCT(100), LV_PCT(100));
         lv_obj_set_style_radius(btn_container, 0, 0);
-        lv_obj_set_style_pad_all(btn_container, 0, 0);
+        lv_obj_set_style_pad_all(btn_container, 2, 0);
         lv_obj_set_style_border_width(btn_container, 0, 0);
         lv_obj_set_style_bg_opa(btn_container, LV_OPA_TRANSP, 0);
         lv_obj_set_flex_flow(btn_container, LV_FLEX_FLOW_COLUMN);
@@ -249,7 +286,7 @@ void LvglTouchUi::ShowMainGridPage() {
 
         // Text label
         lv_obj_t* txt_label = lv_label_create(btn_container);
-        lv_obj_set_style_text_font(txt_label, text_font, 0);
+        ConfigureWrapLabel(txt_label, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
         lv_label_set_text(txt_label, label);
         if (theme) {
             lv_obj_set_style_text_color(txt_label, theme->text_color(), 0);
@@ -279,8 +316,8 @@ void LvglTouchUi::ShowMainGridPage() {
     // Row 1 placeholders
     for (int col = 0; col < 3; ++col) {
         lv_obj_t* placeholder = lv_obj_create(grid);
-        lv_obj_set_grid_cell(placeholder, LV_GRID_ALIGN_CENTER, col, 1, LV_GRID_ALIGN_CENTER, 1, 1);
-        lv_obj_set_size(placeholder, 70, 90);
+        lv_obj_set_grid_cell(placeholder, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
+        lv_obj_set_size(placeholder, LV_PCT(100), LV_PCT(100));
         lv_obj_set_style_bg_opa(placeholder, LV_OPA_TRANSP, 0);
         lv_obj_set_style_border_width(placeholder, 0, 0);
     }
@@ -333,7 +370,7 @@ void LvglTouchUi::ShowChatPage() {
     lv_obj_t* back_btn = lv_button_create(bottom_panel);
     lv_obj_set_size(back_btn, 65, 30);
     lv_obj_t* back_label = lv_label_create(back_btn);
-    lv_obj_set_style_text_font(back_label, text_font, 0);
+    ConfigureButtonLabel(back_label, text_font);
     lv_label_set_text(back_label, FONT_AWESOME_ARROW_LEFT);
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
@@ -360,7 +397,8 @@ void LvglTouchUi::ShowChatPage() {
 
     // Mic Status Label
     mic_status_label = lv_label_create(status_container);
-    lv_obj_set_style_text_font(mic_status_label, text_font, 0);
+    lv_obj_set_flex_grow(mic_status_label, 1);
+    ConfigureDotLabel(mic_status_label, text_font, 1, LV_TEXT_ALIGN_RIGHT);
     lv_label_set_text(mic_status_label, "Đang chờ...");
 
     RenderChatHistory();
@@ -537,7 +575,8 @@ void LvglTouchUi::ShowSettingsPage() {
     // Row helper: Creates a flex row container
     auto create_settings_row = [&](lv_obj_t* parent) {
         lv_obj_t* row = lv_obj_create(parent);
-        lv_obj_set_size(row, LV_PCT(100), 40);
+        lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_style_min_height(row, 40, 0);
         lv_obj_set_style_radius(row, 6, 0);
         lv_obj_set_style_pad_left(row, 8, 0);
         lv_obj_set_style_pad_right(row, 8, 0);
@@ -563,7 +602,8 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_obj_t* vol_row = create_settings_row(settings_layout);
 
     lv_obj_t* vol_label = lv_label_create(vol_row);
-    lv_obj_set_style_text_font(vol_label, text_font, 0);
+    lv_obj_set_flex_grow(vol_label, 1);
+    ConfigureWrapLabel(vol_label, text_font, 1);
     int current_volume = Board::GetInstance().GetAudioCodec()->output_volume();
     char vol_str[32];
     snprintf(vol_str, sizeof(vol_str), "Âm lượng: %d%%", current_volume);
@@ -590,7 +630,8 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_obj_t* theme_row = create_settings_row(settings_layout);
 
     lv_obj_t* theme_label = lv_label_create(theme_row);
-    lv_obj_set_style_text_font(theme_label, text_font, 0);
+    lv_obj_set_flex_grow(theme_label, 1);
+    ConfigureWrapLabel(theme_label, text_font, 1);
     lv_label_set_text(theme_label, "Giao diện tối:");
 
     lv_obj_t* theme_sw = lv_switch_create(theme_row);
@@ -612,13 +653,14 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_obj_t* ota_row = create_settings_row(settings_layout);
 
     lv_obj_t* ota_lbl = lv_label_create(ota_row);
-    lv_obj_set_style_text_font(ota_lbl, text_font, 0);
+    lv_obj_set_flex_grow(ota_lbl, 1);
+    ConfigureWrapLabel(ota_lbl, text_font, 1);
     lv_label_set_text(ota_lbl, "Cấu hình OTA:");
 
     lv_obj_t* ota_btn = lv_button_create(ota_row);
     lv_obj_set_size(ota_btn, 60, 30);
     lv_obj_t* ota_btn_lbl = lv_label_create(ota_btn);
-    lv_obj_set_style_text_font(ota_btn_lbl, text_font, 0);
+    ConfigureButtonLabel(ota_btn_lbl, text_font);
     lv_label_set_text(ota_btn_lbl, "Sửa");
     lv_obj_center(ota_btn_lbl);
 
@@ -640,7 +682,9 @@ void LvglTouchUi::ShowSettingsPage() {
 
         // 2. Dialog box
         lv_obj_t* dialog = lv_obj_create(overlay);
-        lv_obj_set_size(dialog, 280, 100);
+        lv_obj_set_size(dialog, LV_PCT(92), LV_SIZE_CONTENT);
+        lv_obj_set_style_max_width(dialog, 300, 0);
+        lv_obj_set_style_min_height(dialog, 116, 0);
         lv_obj_align(dialog, LV_ALIGN_TOP_MID, 0, 10);
         lv_obj_set_style_radius(dialog, 8, 0);
         lv_obj_set_style_pad_all(dialog, 6, 0);
@@ -660,7 +704,7 @@ void LvglTouchUi::ShowSettingsPage() {
         // Title
         auto modal_text_font = ui->GetTextFont();
         lv_obj_t* title_lbl = lv_label_create(dialog);
-        lv_obj_set_style_text_font(title_lbl, modal_text_font, 0);
+        ConfigureWrapLabel(title_lbl, modal_text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
         lv_label_set_text(title_lbl, "Nhập OTA URL:");
 
         // Text area
@@ -685,7 +729,7 @@ void LvglTouchUi::ShowSettingsPage() {
         lv_obj_t* cancel = lv_button_create(btn_row);
         lv_obj_set_size(cancel, 75, 28);
         lv_obj_t* cancel_lbl = lv_label_create(cancel);
-        lv_obj_set_style_text_font(cancel_lbl, modal_text_font, 0);
+        ConfigureButtonLabel(cancel_lbl, modal_text_font);
         lv_label_set_text(cancel_lbl, "Hủy");
         lv_obj_center(cancel_lbl);
         lv_obj_add_event_cb(cancel, [](lv_event_t* ev) {
@@ -697,7 +741,7 @@ void LvglTouchUi::ShowSettingsPage() {
         lv_obj_t* save = lv_button_create(btn_row);
         lv_obj_set_size(save, 75, 28);
         lv_obj_t* save_lbl = lv_label_create(save);
-        lv_obj_set_style_text_font(save_lbl, modal_text_font, 0);
+        ConfigureButtonLabel(save_lbl, modal_text_font);
         lv_label_set_text(save_lbl, "Lưu");
         lv_obj_center(save_lbl);
         lv_obj_add_event_cb(save, [](lv_event_t* ev) {
@@ -726,13 +770,14 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_obj_t* wifi_row = create_settings_row(settings_layout);
 
     lv_obj_t* wifi_lbl = lv_label_create(wifi_row);
-    lv_obj_set_style_text_font(wifi_lbl, text_font, 0);
+    lv_obj_set_flex_grow(wifi_lbl, 1);
+    ConfigureWrapLabel(wifi_lbl, text_font, 1);
     lv_label_set_text(wifi_lbl, "Thiết lập WiFi:");
 
     lv_obj_t* wifi_btn = lv_button_create(wifi_row);
     lv_obj_set_size(wifi_btn, 60, 30);
     lv_obj_t* wifi_btn_lbl = lv_label_create(wifi_btn);
-    lv_obj_set_style_text_font(wifi_btn_lbl, text_font, 0);
+    ConfigureButtonLabel(wifi_btn_lbl, text_font);
     lv_label_set_text(wifi_btn_lbl, "Quét");
     lv_obj_center(wifi_btn_lbl);
     lv_obj_add_event_cb(wifi_btn, [](lv_event_t* e) {
@@ -752,7 +797,7 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_obj_t* back_btn = lv_button_create(back_row);
     lv_obj_set_size(back_btn, 90, 30);
     lv_obj_t* back_lbl = lv_label_create(back_btn);
-    lv_obj_set_style_text_font(back_lbl, text_font, 0);
+    ConfigureButtonLabel(back_lbl, text_font);
     lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
     lv_obj_center(back_lbl);
     lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
@@ -807,7 +852,8 @@ void LvglTouchUi::ShowAboutPage() {
 
     auto create_about_row = [&](const char* label_text, const std::string& value_text) {
         lv_obj_t* row = lv_obj_create(about_layout);
-        lv_obj_set_size(row, LV_PCT(100), 32);
+        lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_style_min_height(row, 32, 0);
         lv_obj_set_style_radius(row, 4, 0);
         lv_obj_set_style_pad_left(row, 6, 0);
         lv_obj_set_style_pad_right(row, 6, 0);
@@ -828,16 +874,12 @@ void LvglTouchUi::ShowAboutPage() {
         lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
         lv_obj_t* lbl = lv_label_create(row);
-        lv_obj_set_style_text_font(lbl, text_font, 0);
+        ConfigureWrapLabel(lbl, text_font, LV_PCT(40));
         lv_label_set_text(lbl, label_text);
 
         lv_obj_t* val = lv_label_create(row);
-        lv_obj_set_style_text_font(val, text_font, 0);
+        ConfigureScrollLabel(val, text_font, LV_PCT(56), LV_TEXT_ALIGN_RIGHT);
         lv_label_set_text(val, value_text.c_str());
-
-        lv_obj_set_width(val, LV_SIZE_CONTENT);
-        lv_obj_set_style_max_width(val, 140, 0);
-        lv_label_set_long_mode(val, LV_LABEL_LONG_SCROLL_CIRCULAR);
 
         return row;
     };
@@ -864,7 +906,7 @@ void LvglTouchUi::ShowAboutPage() {
     lv_obj_t* back_btn = lv_button_create(back_row);
     lv_obj_set_size(back_btn, 90, 30);
     lv_obj_t* back_lbl = lv_label_create(back_btn);
-    lv_obj_set_style_text_font(back_lbl, text_font, 0);
+    ConfigureButtonLabel(back_lbl, text_font);
     lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
     lv_obj_center(back_lbl);
     lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
@@ -898,10 +940,13 @@ void LvglTouchUi::ShowWifiSetupPage() {
     lv_obj_set_style_bg_opa(setup_layout, LV_OPA_TRANSP, 0);
     lv_obj_set_flex_flow(setup_layout, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(setup_layout, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_row(setup_layout, 4, 0);
+    lv_obj_set_scroll_dir(setup_layout, LV_DIR_VER);
+    lv_obj_set_scrollbar_mode(setup_layout, LV_SCROLLBAR_MODE_AUTO);
 
     // Label: Select SSID
     lv_obj_t* select_label = lv_label_create(setup_layout);
-    lv_obj_set_style_text_font(select_label, text_font, 0);
+    ConfigureWrapLabel(select_label, text_font, LV_PCT(90), LV_TEXT_ALIGN_CENTER);
     lv_label_set_text(select_label, "Chọn Wifi AP:");
 
     // Roller for SSID selection
@@ -913,7 +958,7 @@ void LvglTouchUi::ShowWifiSetupPage() {
 
     // Label: Password
     lv_obj_t* pass_label = lv_label_create(setup_layout);
-    lv_obj_set_style_text_font(pass_label, text_font, 0);
+    ConfigureWrapLabel(pass_label, text_font, LV_PCT(90), LV_TEXT_ALIGN_CENTER);
     lv_label_set_text(pass_label, "Mật khẩu:");
 
     // Text Area for password
@@ -937,7 +982,7 @@ void LvglTouchUi::ShowWifiSetupPage() {
     lv_obj_t* back_btn = lv_button_create(btn_row);
     lv_obj_set_size(back_btn, 80, 32);
     lv_obj_t* back_label = lv_label_create(back_btn);
-    lv_obj_set_style_text_font(back_label, text_font, 0);
+    ConfigureButtonLabel(back_label, text_font);
     lv_label_set_text(back_label, "Hủy");
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
@@ -952,7 +997,7 @@ void LvglTouchUi::ShowWifiSetupPage() {
     lv_obj_t* connect_btn = lv_button_create(btn_row);
     lv_obj_set_size(connect_btn, 80, 32);
     lv_obj_t* conn_label = lv_label_create(connect_btn);
-    lv_obj_set_style_text_font(conn_label, text_font, 0);
+    ConfigureButtonLabel(conn_label, text_font);
     lv_label_set_text(conn_label, "Kết nối");
     lv_obj_center(conn_label);
 
@@ -1041,7 +1086,7 @@ void LvglTouchUi::ShowWifiConnectPage() {
 
     // Status text
     lv_obj_t* status_lbl = lv_label_create(connect_layout);
-    lv_obj_set_style_text_font(status_lbl, text_font, 0);
+    ConfigureWrapLabel(status_lbl, text_font, LV_PCT(92), LV_TEXT_ALIGN_CENTER);
 
     char status_str[128];
     if (wifi_connect_attempts_ > 0) {
@@ -1050,7 +1095,6 @@ void LvglTouchUi::ShowWifiConnectPage() {
         snprintf(status_str, sizeof(status_str), "Đang kết nối đến WiFi...");
     }
     lv_label_set_text(status_lbl, status_str);
-    lv_obj_set_style_text_align(status_lbl, LV_TEXT_ALIGN_CENTER, 0);
 
     // Spinner
     lv_obj_t* spinner = lv_spinner_create(connect_layout);
