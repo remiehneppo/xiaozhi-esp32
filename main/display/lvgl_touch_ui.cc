@@ -15,6 +15,9 @@
 
 #define TAG "LvglTouchUi"
 
+LV_FONT_DECLARE(BUILTIN_TEXT_FONT);
+LV_FONT_DECLARE(BUILTIN_ICON_FONT);
+
 LvglTouchUi::LvglTouchUi(Display* display) : TouchUi(display) {
     esp_timer_create_args_t notification_timer_args = {
         .callback = &LvglTouchUi::NotificationTimerCallback,
@@ -88,8 +91,6 @@ void LvglTouchUi::Initialize(const char* startup_message) {
 
 void LvglTouchUi::CreateStatusBar() {
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-    auto text_font = theme ? theme->text_font()->font() : &lv_font_montserrat_14;
-    auto icon_font = theme ? theme->icon_font()->font() : &lv_font_montserrat_14;
 
     top_bar = lv_obj_create(master_container);
     lv_obj_set_size(top_bar, LV_PCT(100), 24);
@@ -114,18 +115,17 @@ void LvglTouchUi::CreateStatusBar() {
 
     // Left: WiFi Strength
     wifi_icon = lv_label_create(top_bar);
-    lv_obj_set_style_text_font(wifi_icon, icon_font, 0);
     lv_label_set_text(wifi_icon, FONT_AWESOME_WIFI_SLASH);
 
     // Center: System clock
     time_label = lv_label_create(top_bar);
-    lv_obj_set_style_text_font(time_label, text_font, 0);
     lv_label_set_text(time_label, "--:--");
 
     // Right: Battery
     battery_icon = lv_label_create(top_bar);
-    lv_obj_set_style_text_font(battery_icon, icon_font, 0);
     lv_label_set_text(battery_icon, FONT_AWESOME_BATTERY_HALF " --%");
+
+    ApplyStatusBarTheme();
 }
 
 void LvglTouchUi::UpdateStatusBar(bool update_all) {
@@ -201,8 +201,8 @@ void LvglTouchUi::ShowMainGridPage() {
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-    auto text_font = theme ? theme->text_font()->font() : &lv_font_montserrat_14;
-    auto large_icon_font = theme ? theme->large_icon_font()->font() : &lv_font_montserrat_14;
+    auto text_font = GetTextFont();
+    auto large_icon_font = GetLargeIconFont();
 
     // 3x2 grid layout setup
     static int32_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
@@ -293,9 +293,8 @@ void LvglTouchUi::ShowChatPage() {
 
     lv_obj_clean(page_container);
 
-    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-    auto text_font = theme ? theme->text_font()->font() : &lv_font_montserrat_14;
-    auto large_icon_font = theme ? theme->large_icon_font()->font() : &lv_font_montserrat_14;
+    auto text_font = GetTextFont();
+    auto large_icon_font = GetLargeIconFont();
 
     // Main vertical layout inside page_container
     lv_obj_t* chat_layout = lv_obj_create(page_container);
@@ -374,7 +373,7 @@ void LvglTouchUi::AppendChatMessageToView(const std::string& role, const std::st
     }
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-    auto text_font = theme ? theme->text_font()->font() : &lv_font_montserrat_14;
+    auto text_font = GetTextFont();
 
     bool is_user = role == "user";
 
@@ -521,7 +520,7 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-    auto text_font = theme ? theme->text_font()->font() : &lv_font_montserrat_14;
+    auto text_font = GetTextFont();
 
     // Create a scrollable flex container for settings items
     lv_obj_t* settings_layout = lv_obj_create(page_container);
@@ -659,7 +658,9 @@ void LvglTouchUi::ShowSettingsPage() {
         lv_obj_set_flex_align(dialog, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
         // Title
+        auto modal_text_font = ui->GetTextFont();
         lv_obj_t* title_lbl = lv_label_create(dialog);
+        lv_obj_set_style_text_font(title_lbl, modal_text_font, 0);
         lv_label_set_text(title_lbl, "Nhập OTA URL:");
 
         // Text area
@@ -684,6 +685,7 @@ void LvglTouchUi::ShowSettingsPage() {
         lv_obj_t* cancel = lv_button_create(btn_row);
         lv_obj_set_size(cancel, 75, 28);
         lv_obj_t* cancel_lbl = lv_label_create(cancel);
+        lv_obj_set_style_text_font(cancel_lbl, modal_text_font, 0);
         lv_label_set_text(cancel_lbl, "Hủy");
         lv_obj_center(cancel_lbl);
         lv_obj_add_event_cb(cancel, [](lv_event_t* ev) {
@@ -695,6 +697,7 @@ void LvglTouchUi::ShowSettingsPage() {
         lv_obj_t* save = lv_button_create(btn_row);
         lv_obj_set_size(save, 75, 28);
         lv_obj_t* save_lbl = lv_label_create(save);
+        lv_obj_set_style_text_font(save_lbl, modal_text_font, 0);
         lv_label_set_text(save_lbl, "Lưu");
         lv_obj_center(save_lbl);
         lv_obj_add_event_cb(save, [](lv_event_t* ev) {
@@ -766,7 +769,7 @@ void LvglTouchUi::ShowAboutPage() {
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-    auto text_font = theme ? theme->text_font()->font() : &lv_font_montserrat_14;
+    auto text_font = GetTextFont();
 
     // Create container for details
     lv_obj_t* about_layout = lv_obj_create(page_container);
@@ -884,8 +887,7 @@ void LvglTouchUi::ShowWifiSetupPage() {
 
     lv_obj_clean(page_container);
 
-    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-    auto text_font = theme ? theme->text_font()->font() : &lv_font_montserrat_14;
+    auto text_font = GetTextFont();
 
     // Outer layout inside content area
     lv_obj_t* setup_layout = lv_obj_create(page_container);
@@ -935,6 +937,7 @@ void LvglTouchUi::ShowWifiSetupPage() {
     lv_obj_t* back_btn = lv_button_create(btn_row);
     lv_obj_set_size(back_btn, 80, 32);
     lv_obj_t* back_label = lv_label_create(back_btn);
+    lv_obj_set_style_text_font(back_label, text_font, 0);
     lv_label_set_text(back_label, "Hủy");
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
@@ -949,6 +952,7 @@ void LvglTouchUi::ShowWifiSetupPage() {
     lv_obj_t* connect_btn = lv_button_create(btn_row);
     lv_obj_set_size(connect_btn, 80, 32);
     lv_obj_t* conn_label = lv_label_create(connect_btn);
+    lv_obj_set_style_text_font(conn_label, text_font, 0);
     lv_label_set_text(conn_label, "Kết nối");
     lv_obj_center(conn_label);
 
@@ -1019,9 +1023,8 @@ void LvglTouchUi::ShowWifiConnectPage() {
     active_page_ = PageType::kPageWifiConnect;
     lv_obj_clean(page_container);
 
-    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-    auto text_font = theme ? theme->text_font()->font() : &lv_font_montserrat_14;
-    auto large_icon_font = theme ? theme->large_icon_font()->font() : &lv_font_montserrat_14;
+    auto text_font = GetTextFont();
+    auto large_icon_font = GetLargeIconFont();
 
     lv_obj_t* connect_layout = lv_obj_create(page_container);
     lv_obj_set_size(connect_layout, LV_PCT(100), LV_PCT(100));
@@ -1129,9 +1132,49 @@ void LvglTouchUi::SetTheme(Theme* theme) {
             lv_obj_set_style_bg_color(top_bar, lvgl_theme->background_color(), 0);
             lv_obj_set_style_text_color(top_bar, lvgl_theme->text_color(), 0);
         }
+        ApplyStatusBarTheme();
     }
 
     RebuildActivePage();
+}
+
+const lv_font_t* LvglTouchUi::GetTextFont() const {
+    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
+    auto font = theme ? theme->text_font() : nullptr;
+    if (font != nullptr && font->font() != nullptr) {
+        return font->font();
+    }
+    return &BUILTIN_TEXT_FONT;
+}
+
+const lv_font_t* LvglTouchUi::GetIconFont() const {
+    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
+    auto font = theme ? theme->icon_font() : nullptr;
+    if (font != nullptr && font->font() != nullptr) {
+        return font->font();
+    }
+    return &BUILTIN_ICON_FONT;
+}
+
+const lv_font_t* LvglTouchUi::GetLargeIconFont() const {
+    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
+    auto font = theme ? theme->large_icon_font() : nullptr;
+    if (font != nullptr && font->font() != nullptr) {
+        return font->font();
+    }
+    return GetIconFont();
+}
+
+void LvglTouchUi::ApplyStatusBarTheme() {
+    if (wifi_icon != nullptr) {
+        lv_obj_set_style_text_font(wifi_icon, GetIconFont(), 0);
+    }
+    if (time_label != nullptr) {
+        lv_obj_set_style_text_font(time_label, GetTextFont(), 0);
+    }
+    if (battery_icon != nullptr) {
+        lv_obj_set_style_text_font(battery_icon, GetIconFont(), 0);
+    }
 }
 
 void LvglTouchUi::DismissModalOverlay() {

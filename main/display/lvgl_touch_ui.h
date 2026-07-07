@@ -46,6 +46,10 @@ private:
     void RebuildActivePage();
     void DismissModalOverlay();
     void LeaveWifiSetupPage();
+    const lv_font_t* GetTextFont() const;
+    const lv_font_t* GetIconFont() const;
+    const lv_font_t* GetLargeIconFont() const;
+    void ApplyStatusBarTheme();
 
     // WiFi setup widgets
     lv_obj_t* wifi_roller = nullptr;
