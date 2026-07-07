@@ -66,5 +66,12 @@ bool WifiSetupWorkflow::GetScannedSsids(std::vector<std::string>& ssids) {
 
 void WifiSetupWorkflow::SaveCredentialsAndReconnect(const char* ssid, const char* password) {
     SsidManager::GetInstance().AddSsid(ssid ? ssid : "", password ? password : "");
-    WifiManager::GetInstance().StartStation();
+
+    auto& wifi_manager = WifiManager::GetInstance();
+    if (wifi_manager.IsConfigMode()) {
+        wifi_manager.StopConfigAp();
+        return;
+    }
+
+    wifi_manager.StartStation();
 }
