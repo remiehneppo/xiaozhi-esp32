@@ -64,9 +64,7 @@ void Application::Initialize() {
 
     // Setup the display
     auto display = board.GetDisplay();
-    display->SetupUI();
-    // Print board name/version info
-    display->SetChatMessage("system", SystemInfo::GetUserAgent().c_str());
+    display->Initialize(SystemInfo::GetUserAgent().c_str());
 
     // Setup the audio service
     auto codec = board.GetAudioCodec();
@@ -86,7 +84,8 @@ void Application::Initialize() {
     audio_service_.SetCallbacks(callbacks);
 
     // Add state change listeners
-    state_machine_.AddStateChangeListener([this](DeviceState old_state, DeviceState new_state) {
+    state_machine_.AddStateChangeListener([this, display](DeviceState old_state, DeviceState new_state) {
+        display->HandleDeviceStateChange(old_state, new_state);
         xEventGroupSetBits(event_group_, MAIN_EVENT_STATE_CHANGED);
     });
 
@@ -1128,4 +1127,3 @@ void Application::ResetProtocol() {
         protocol_.reset();
     });
 }
-

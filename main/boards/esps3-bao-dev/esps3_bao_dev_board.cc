@@ -1,6 +1,7 @@
 #include "wifi_board.h"
 #include "codecs/es8311_audio_codec.h"
 #include "display/lcd_display.h"
+#include "display/lvgl_touch_ui.h"
 #include "esp_lcd_ili9341.h"
 #include "application.h"
 #include "button.h"
@@ -180,6 +181,7 @@ private:
     Button boot_button_;
     Esps3BaoDevDisplay* display_ = nullptr;
     lv_indev_t* touch_indev_ = nullptr;
+    LvglTouchUi* touch_ui_ = nullptr;
 
     void InitializeI2c() {
         i2c_master_bus_config_t i2c_bus_cfg = {
@@ -353,6 +355,13 @@ public:
         InitializeTouch();
         InitializeButtons();
         GetBacklight()->SetBrightness(100);
+        touch_ui_ = new LvglTouchUi(display_);
+    }
+
+    virtual ~Esps3BaoDevBoard() {
+        if (touch_ui_ != nullptr) {
+            delete touch_ui_;
+        }
     }
 
     virtual AudioCodec* GetAudioCodec() override {
@@ -374,12 +383,16 @@ public:
     }
 
     virtual Display* GetDisplay() override {
-        return display_;
+        return touch_ui_ != nullptr ? static_cast<Display*>(touch_ui_) : display_;
     }
 
     virtual Backlight* GetBacklight() override {
         static PwmBacklight backlight(DISPLAY_BACKLIGHT_PIN, DISPLAY_BACKLIGHT_OUTPUT_INVERT);
         return &backlight;
+    }
+
+    virtual const char* GetStorageStatusText() override {
+        return "Chưa hỗ trợ";
     }
 };
 

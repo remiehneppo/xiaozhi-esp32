@@ -2,6 +2,7 @@
 #define DISPLAY_H
 
 #include "emoji_collection.h"
+#include "device_state.h"
 
 #ifndef CONFIG_USE_EMOTE_MESSAGE_STYLE
 #define HAVE_LVGL 1
@@ -40,6 +41,16 @@ public:
     virtual Theme* GetTheme() { return current_theme_; }
     virtual void UpdateStatusBar(bool update_all = false);
     virtual void SetPowerSaveMode(bool on);
+    virtual void Initialize(const char* startup_message = nullptr) {
+        SetupUI();
+        if (startup_message != nullptr && startup_message[0] != '\0') {
+            SetChatMessage("system", startup_message);
+        }
+    }
+    virtual void HandleDeviceStateChange(DeviceState old_state, DeviceState new_state) {
+        (void)old_state;
+        (void)new_state;
+    }
     virtual void SetupUI() { 
         setup_ui_called_ = true;
     }
@@ -56,6 +67,7 @@ protected:
     Theme* current_theme_ = nullptr;
 
     friend class DisplayLockGuard;
+    friend class TouchUi;
     virtual bool Lock(int timeout_ms = 0) = 0;
     virtual void Unlock() = 0;
 };
