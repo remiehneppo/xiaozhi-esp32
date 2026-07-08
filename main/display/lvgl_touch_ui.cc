@@ -52,6 +52,14 @@ void ConfigureButtonLabel(lv_obj_t* label, const lv_font_t* font) {
     ConfigureDotLabel(label, font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
 }
 
+lv_obj_tree_walk_res_t ApplyLabelTextColor(lv_obj_t* obj, void* user_data) {
+    if (lv_obj_check_type(obj, &lv_label_class)) {
+        auto* color = static_cast<lv_color_t*>(user_data);
+        lv_obj_set_style_text_color(obj, *color, 0);
+    }
+    return LV_OBJ_TREE_WALK_NEXT;
+}
+
 } // namespace
 
 LvglTouchUi::LvglTouchUi(Display* display) : TouchUi(display) {
@@ -328,6 +336,8 @@ void LvglTouchUi::ShowMainGridPage() {
         lv_obj_set_style_bg_opa(placeholder, LV_OPA_TRANSP, 0);
         lv_obj_set_style_border_width(placeholder, 0, 0);
     }
+
+    ApplyReadableTextColors();
 }
 
 void LvglTouchUi::ShowChatPage() {
@@ -409,6 +419,7 @@ void LvglTouchUi::ShowChatPage() {
     lv_label_set_text(mic_status_label, "Đang chờ...");
 
     RenderChatHistory();
+    ApplyReadableTextColors();
     UpdateMicStatusIndicator();
 }
 
@@ -431,9 +442,11 @@ void LvglTouchUi::AppendChatMessageToView(const std::string& role, const std::st
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(row, is_user ? LV_FLEX_ALIGN_END : LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
+    const int32_t bubble_max_width = width_ * 3 / 4;
+    const int32_t label_width = bubble_max_width - 20;
+
     lv_obj_t* bubble = lv_obj_create(row);
-    lv_obj_set_size(bubble, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_style_max_width(bubble, (int32_t)(width_ * 0.75), 0);
+    lv_obj_set_size(bubble, bubble_max_width, LV_SIZE_CONTENT);
     lv_obj_set_style_radius(bubble, 10, 0);
     lv_obj_set_style_pad_left(bubble, 10, 0);
     lv_obj_set_style_pad_right(bubble, 10, 0);
@@ -461,8 +474,10 @@ void LvglTouchUi::AppendChatMessageToView(const std::string& role, const std::st
     lv_obj_t* label = lv_label_create(bubble);
     lv_obj_set_style_text_font(label, text_font, 0);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
-    lv_obj_set_width(label, LV_PCT(100));
+    lv_obj_set_width(label, label_width);
     lv_label_set_text(label, content.c_str());
+    lv_obj_set_style_text_color(label, is_user ? lv_color_hex(0xFFFFFF)
+                                               : (theme ? theme->text_color() : lv_color_hex(0xFFFFFF)), 0);
 
     lv_obj_scroll_to_view(row, LV_ANIM_ON);
 }
@@ -771,6 +786,7 @@ void LvglTouchUi::ShowSettingsPage() {
         lv_obj_t* keyboard_obj = lv_keyboard_create(lv_screen_active());
         ui->modal_keyboard_ = keyboard_obj;
         lv_keyboard_set_textarea(keyboard_obj, ta);
+        ui->ApplyReadableTextColors();
     }, LV_EVENT_CLICKED, this);
 
     // Item 4: WiFi Setup
@@ -811,6 +827,8 @@ void LvglTouchUi::ShowSettingsPage() {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
         ui->ShowMainGridPage();
     }, LV_EVENT_CLICKED, this);
+
+    ApplyReadableTextColors();
 }
 
 void LvglTouchUi::ShowAboutPage() {
@@ -920,6 +938,8 @@ void LvglTouchUi::ShowAboutPage() {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
         ui->ShowMainGridPage();
     }, LV_EVENT_CLICKED, this);
+
+    ApplyReadableTextColors();
 }
 
 void LvglTouchUi::ShowWifiSetupPage() {
@@ -1066,6 +1086,8 @@ void LvglTouchUi::ShowWifiSetupPage() {
             lv_roller_set_options(wifi_roller, "Không thể quét WiFi", LV_ROLLER_MODE_NORMAL);
         }
     }
+
+    ApplyReadableTextColors();
 }
 
 void LvglTouchUi::ShowWifiConnectPage() {
@@ -1108,6 +1130,8 @@ void LvglTouchUi::ShowWifiConnectPage() {
     lv_obj_set_size(spinner, 30, 30);
     lv_obj_set_style_arc_width(spinner, 3, LV_PART_MAIN);
     lv_obj_set_style_arc_width(spinner, 3, LV_PART_INDICATOR);
+
+    ApplyReadableTextColors();
 }
 
 void LvglTouchUi::SetStatus(const char* status) {
@@ -1225,6 +1249,21 @@ void LvglTouchUi::ApplyStatusBarTheme() {
     }
     if (battery_icon != nullptr) {
         lv_obj_set_style_text_font(battery_icon, GetIconFont(), 0);
+    }
+}
+
+void LvglTouchUi::ApplyReadableTextColors() {
+    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
+    if (theme == nullptr || theme->name() != "dark") {
+        return;
+    }
+
+    lv_color_t text_color = theme->text_color();
+    if (master_container != nullptr) {
+        lv_obj_tree_walk(master_container, ApplyLabelTextColor, &text_color);
+    }
+    if (modal_overlay_ != nullptr) {
+        lv_obj_tree_walk(modal_overlay_, ApplyLabelTextColor, &text_color);
     }
 }
 

@@ -46,6 +46,7 @@ private:
     void RebuildActivePage();
     void DismissModalOverlay();
     void LeaveWifiSetupPage();
+    void ApplyReadableTextColors();
     const lv_font_t* GetTextFont() const;
     const lv_font_t* GetIconFont() const;
     const lv_font_t* GetLargeIconFont() const;
