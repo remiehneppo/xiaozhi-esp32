@@ -7,6 +7,7 @@
 #include "system_info.h"
 #include "audio_codec.h"
 #include "settings.h"
+#include "application.h"
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -54,12 +55,31 @@ void ConfigureScrollLabel(lv_obj_t* label, const lv_font_t* font, int32_t width,
 void ConfigureSingleLineLabel(lv_obj_t* label, const lv_font_t* font, int32_t width, lv_text_align_t align = LV_TEXT_ALIGN_CENTER) {
     lv_obj_set_style_text_font(label, font, 0);
     lv_obj_set_width(label, width);
-    lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
     lv_obj_set_style_text_align(label, align, 0);
 }
 
 void ConfigureButtonLabel(lv_obj_t* label, const lv_font_t* font) {
-    ConfigureDotLabel(label, font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_width(label, LV_PCT(90));
+    lv_obj_set_style_max_width(label, LV_PCT(100), 0);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+}
+
+void HandleMicActionClicked(lv_event_t* e) {
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
+        return;
+    }
+
+    auto& app = Application::GetInstance();
+    if (app.GetDeviceState() == kDeviceStateListening ||
+        app.GetDeviceState() == kDeviceStateAudioTesting) {
+        app.StopListening();
+        return;
+    }
+
+    app.StartListening();
 }
 
 lv_obj_tree_walk_res_t ApplyLabelTextColor(lv_obj_t* obj, void* user_data) {
@@ -428,18 +448,24 @@ void LvglTouchUi::ShowChatPage() {
     lv_obj_set_style_bg_opa(status_container, LV_OPA_TRANSP, 0);
     lv_obj_set_flex_flow(status_container, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(status_container, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_flag(status_container, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(status_container, HandleMicActionClicked, LV_EVENT_CLICKED, this);
 
     // Mic Status Icon
     mic_status_icon = lv_label_create(status_container);
     lv_obj_set_style_text_font(mic_status_icon, large_icon_font, 0);
     lv_label_set_text(mic_status_icon, FONT_AWESOME_MICROPHONE);
     lv_obj_set_style_pad_right(mic_status_icon, 4, 0);
+    lv_obj_add_flag(mic_status_icon, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(mic_status_icon, HandleMicActionClicked, LV_EVENT_CLICKED, this);
 
     // Mic Status Label
     mic_status_label = lv_label_create(status_container);
     lv_obj_set_flex_grow(mic_status_label, 1);
     ConfigureDotLabel(mic_status_label, text_font, 1, LV_TEXT_ALIGN_RIGHT);
     lv_label_set_text(mic_status_label, "Đang chờ...");
+    lv_obj_add_flag(mic_status_label, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(mic_status_label, HandleMicActionClicked, LV_EVENT_CLICKED, this);
 
     RenderChatHistory();
     ApplyReadableTextColors();
@@ -841,7 +867,7 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_obj_set_flex_align(back_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     lv_obj_t* back_btn = lv_button_create(back_row);
-    lv_obj_set_size(back_btn, 90, 30);
+    lv_obj_set_size(back_btn, 112, 30);
     lv_obj_t* back_lbl = lv_label_create(back_btn);
     ConfigureButtonLabel(back_lbl, text_font);
     lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
@@ -952,7 +978,7 @@ void LvglTouchUi::ShowAboutPage() {
     lv_obj_set_flex_align(back_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     lv_obj_t* back_btn = lv_button_create(back_row);
-    lv_obj_set_size(back_btn, 90, 30);
+    lv_obj_set_size(back_btn, 112, 30);
     lv_obj_t* back_lbl = lv_label_create(back_btn);
     ConfigureButtonLabel(back_lbl, text_font);
     lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
