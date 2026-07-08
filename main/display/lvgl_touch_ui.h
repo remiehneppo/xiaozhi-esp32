@@ -47,6 +47,8 @@ private:
     void DismissModalOverlay();
     void LeaveWifiSetupPage();
     void ApplyReadableTextColors();
+    void ShowWifiPasswordStep(const char* ssid);
+    void UpdateWifiScanResults(const std::vector<std::string>& ssids, esp_err_t scan_ret);
     const lv_font_t* GetTextFont() const;
     const lv_font_t* GetIconFont() const;
     const lv_font_t* GetLargeIconFont() const;
@@ -54,9 +56,13 @@ private:
 
     // WiFi setup widgets
     lv_obj_t* wifi_roller = nullptr;
+    lv_obj_t* wifi_password_label_ = nullptr;
     lv_obj_t* password_textarea = nullptr;
+    lv_obj_t* wifi_select_btn_ = nullptr;
+    lv_obj_t* wifi_connect_btn_ = nullptr;
     lv_obj_t* keyboard = nullptr;
     bool wifi_scan_has_results_ = false;
+    std::string selected_wifi_ssid_;
 
     // Modal widgets
     lv_obj_t* modal_overlay_ = nullptr;
@@ -81,8 +87,6 @@ private:
     WifiSetupWorkflow wifi_setup_workflow_;
 
     static void NotificationTimerCallback(void* arg);
-    static void WifiScanDoneHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
-    void PopulateWifiRoller();
 
 public:
     LvglTouchUi(Display* display);

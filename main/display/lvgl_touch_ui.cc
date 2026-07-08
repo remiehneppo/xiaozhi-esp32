@@ -79,7 +79,6 @@ LvglTouchUi::LvglTouchUi(Display* display) : TouchUi(display) {
 }
 
 LvglTouchUi::~LvglTouchUi() {
-    wifi_setup_workflow_.UnregisterScanDoneHandler();
     if (notification_timer_ != nullptr) {
         esp_timer_stop(notification_timer_);
         esp_timer_delete(notification_timer_);
@@ -943,151 +942,179 @@ void LvglTouchUi::ShowAboutPage() {
 }
 
 void LvglTouchUi::ShowWifiSetupPage() {
-    DisplayLockGuard lock(this);
-    ResetPageWidgets();
+    std::vector<std::string> scanned_ssids;
+    esp_err_t scan_ret = ESP_OK;
 
-    active_page_ = PageType::kPageWifiSetup;
-    wifi_scan_has_results_ = false;
+    {
+        DisplayLockGuard lock(this);
+        ResetPageWidgets();
 
-    auto handler_ret = wifi_setup_workflow_.RegisterScanDoneHandler(&LvglTouchUi::WifiScanDoneHandler, this);
-    if (handler_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to register WiFi scan handler: %s", esp_err_to_name(handler_ret));
+        active_page_ = PageType::kPageWifiSetup;
+        wifi_scan_has_results_ = false;
+        selected_wifi_ssid_.clear();
+
+        lv_obj_clean(page_container);
+
+        auto text_font = GetTextFont();
+
+        // Outer layout inside content area
+        lv_obj_t* setup_layout = lv_obj_create(page_container);
+        lv_obj_set_size(setup_layout, LV_PCT(100), LV_PCT(100));
+        lv_obj_set_style_radius(setup_layout, 0, 0);
+        lv_obj_set_style_pad_all(setup_layout, 4, 0);
+        lv_obj_set_style_border_width(setup_layout, 0, 0);
+        lv_obj_set_style_bg_opa(setup_layout, LV_OPA_TRANSP, 0);
+        lv_obj_set_flex_flow(setup_layout, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_align(setup_layout, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_row(setup_layout, 4, 0);
+        lv_obj_set_scroll_dir(setup_layout, LV_DIR_VER);
+        lv_obj_set_scrollbar_mode(setup_layout, LV_SCROLLBAR_MODE_AUTO);
+
+        // Label: Select SSID
+        lv_obj_t* select_label = lv_label_create(setup_layout);
+        ConfigureWrapLabel(select_label, text_font, LV_PCT(90), LV_TEXT_ALIGN_CENTER);
+        lv_label_set_text(select_label, "Chọn WiFi AP:");
+
+        // Roller for SSID selection
+        wifi_roller = lv_roller_create(setup_layout);
+        lv_obj_set_width(wifi_roller, LV_PCT(90));
+        lv_roller_set_options(wifi_roller, "Đang quét mạng...", LV_ROLLER_MODE_NORMAL);
+        lv_roller_set_visible_row_count(wifi_roller, 3);
+        lv_obj_set_style_text_font(wifi_roller, text_font, 0);
+
+        // Label: Password
+        wifi_password_label_ = lv_label_create(setup_layout);
+        ConfigureWrapLabel(wifi_password_label_, text_font, LV_PCT(90), LV_TEXT_ALIGN_CENTER);
+        lv_label_set_text(wifi_password_label_, "Mật khẩu:");
+        lv_obj_add_flag(wifi_password_label_, LV_OBJ_FLAG_HIDDEN);
+
+        // Text Area for password
+        password_textarea = lv_textarea_create(setup_layout);
+        lv_obj_set_width(password_textarea, LV_PCT(90));
+        lv_textarea_set_password_mode(password_textarea, true);
+        lv_textarea_set_one_line(password_textarea, true);
+        lv_textarea_set_placeholder_text(password_textarea, "Mật khẩu");
+        lv_obj_set_style_text_font(password_textarea, text_font, 0);
+        lv_obj_add_flag(password_textarea, LV_OBJ_FLAG_HIDDEN);
+
+        // Button Row: Connect & Back
+        lv_obj_t* btn_row = lv_obj_create(setup_layout);
+        lv_obj_set_size(btn_row, LV_PCT(90), 40);
+        lv_obj_set_style_pad_all(btn_row, 0, 0);
+        lv_obj_set_style_border_width(btn_row, 0, 0);
+        lv_obj_set_style_bg_opa(btn_row, LV_OPA_TRANSP, 0);
+        lv_obj_set_flex_flow(btn_row, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(btn_row, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+        // Back Button
+        lv_obj_t* back_btn = lv_button_create(btn_row);
+        lv_obj_set_size(back_btn, 70, 32);
+        lv_obj_t* back_label = lv_label_create(back_btn);
+        ConfigureButtonLabel(back_label, text_font);
+        lv_label_set_text(back_label, "Hủy");
+        lv_obj_center(back_label);
+        lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
+            auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+            if (ui->keyboard) {
+                lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
+            }
+            ui->ShowMainGridPage();
+        }, LV_EVENT_CLICKED, this);
+
+        wifi_select_btn_ = lv_button_create(btn_row);
+        lv_obj_set_size(wifi_select_btn_, 70, 32);
+        lv_obj_t* select_btn_label = lv_label_create(wifi_select_btn_);
+        ConfigureButtonLabel(select_btn_label, text_font);
+        lv_label_set_text(select_btn_label, "Tiếp");
+        lv_obj_center(select_btn_label);
+        lv_obj_add_event_cb(wifi_select_btn_, [](lv_event_t* e) {
+            auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+
+            char ssid[64];
+            lv_roller_get_selected_str(ui->wifi_roller, ssid, sizeof(ssid));
+            if (!CanConnectToWifiSsid(ui->wifi_scan_has_results_, ssid)) {
+                ui->ShowNotification("Chọn mạng WiFi hợp lệ");
+                return;
+            }
+
+            ui->selected_wifi_ssid_ = ssid;
+            ui->ShowWifiPasswordStep(ssid);
+        }, LV_EVENT_CLICKED, this);
+
+        // Connect Button
+        wifi_connect_btn_ = lv_button_create(btn_row);
+        lv_obj_set_size(wifi_connect_btn_, 86, 32);
+        lv_obj_t* conn_label = lv_label_create(wifi_connect_btn_);
+        ConfigureButtonLabel(conn_label, text_font);
+        lv_label_set_text(conn_label, "Kết nối");
+        lv_obj_center(conn_label);
+        lv_obj_add_flag(wifi_connect_btn_, LV_OBJ_FLAG_HIDDEN);
+
+        // Connect click callback
+        lv_obj_add_event_cb(wifi_connect_btn_, [](lv_event_t* e) {
+            auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+
+            if (!CanConnectToWifiSsid(ui->wifi_scan_has_results_, ui->selected_wifi_ssid_.c_str())) {
+                ui->ShowNotification("Chọn mạng WiFi hợp lệ");
+                return;
+            }
+
+            std::string ssid = ui->selected_wifi_ssid_;
+            std::string password = lv_textarea_get_text(ui->password_textarea);
+            ESP_LOGI(TAG, "Connecting to AP: %s (Password length: %d)",
+                ssid.c_str(), (int)password.length());
+
+            if (ui->keyboard) {
+                lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
+            }
+
+            ui->LeaveWifiSetupPage();
+            ui->ShowWifiConnectPage();
+            ui->wifi_setup_workflow_.SaveCredentialsAndReconnect(ssid.c_str(), password.c_str());
+        }, LV_EVENT_CLICKED, this);
+
+        // Keyboard (overlay on screen bottom)
+        keyboard = lv_keyboard_create(lv_screen_active());
+        lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+
+        // Trigger keyboard show/hide based on textarea focus
+        lv_obj_add_event_cb(password_textarea, [](lv_event_t* e) {
+            auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+            lv_event_code_t code = lv_event_get_code(e);
+            if (code == LV_EVENT_FOCUSED) {
+                lv_keyboard_set_textarea(ui->keyboard, ui->password_textarea);
+                lv_obj_remove_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_scroll_to_view(ui->password_textarea, LV_ANIM_ON);
+            } else if (code == LV_EVENT_DEFOCUSED) {
+                lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
+            }
+        }, LV_EVENT_ALL, this);
+
+        // Hide keyboard when hitting check or cancel buttons on keyboard
+        lv_obj_add_event_cb(keyboard, [](lv_event_t* e) {
+            lv_event_code_t code = lv_event_get_code(e);
+            if (code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+                auto* target_kb = (lv_obj_t*)lv_event_get_target(e);
+                lv_obj_add_flag(target_kb, LV_OBJ_FLAG_HIDDEN);
+            }
+        }, LV_EVENT_ALL, nullptr);
+
+        ApplyReadableTextColors();
     }
 
-    lv_obj_clean(page_container);
+    scan_ret = wifi_setup_workflow_.ScanSsids(scanned_ssids);
+    if (scan_ret != ESP_OK) {
+        ESP_LOGW(TAG, "WiFi scan did not return APs: %s", esp_err_to_name(scan_ret));
+    }
 
-    auto text_font = GetTextFont();
-
-    // Outer layout inside content area
-    lv_obj_t* setup_layout = lv_obj_create(page_container);
-    lv_obj_set_size(setup_layout, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_style_radius(setup_layout, 0, 0);
-    lv_obj_set_style_pad_all(setup_layout, 4, 0);
-    lv_obj_set_style_border_width(setup_layout, 0, 0);
-    lv_obj_set_style_bg_opa(setup_layout, LV_OPA_TRANSP, 0);
-    lv_obj_set_flex_flow(setup_layout, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(setup_layout, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_row(setup_layout, 4, 0);
-    lv_obj_set_scroll_dir(setup_layout, LV_DIR_VER);
-    lv_obj_set_scrollbar_mode(setup_layout, LV_SCROLLBAR_MODE_AUTO);
-
-    // Label: Select SSID
-    lv_obj_t* select_label = lv_label_create(setup_layout);
-    ConfigureWrapLabel(select_label, text_font, LV_PCT(90), LV_TEXT_ALIGN_CENTER);
-    lv_label_set_text(select_label, "Chọn Wifi AP:");
-
-    // Roller for SSID selection
-    wifi_roller = lv_roller_create(setup_layout);
-    lv_obj_set_width(wifi_roller, LV_PCT(90));
-    lv_roller_set_options(wifi_roller, "Đang quét mạng...", LV_ROLLER_MODE_NORMAL);
-    lv_roller_set_visible_row_count(wifi_roller, 3);
-    lv_obj_set_style_text_font(wifi_roller, text_font, 0);
-
-    // Label: Password
-    lv_obj_t* pass_label = lv_label_create(setup_layout);
-    ConfigureWrapLabel(pass_label, text_font, LV_PCT(90), LV_TEXT_ALIGN_CENTER);
-    lv_label_set_text(pass_label, "Mật khẩu:");
-
-    // Text Area for password
-    password_textarea = lv_textarea_create(setup_layout);
-    lv_obj_set_width(password_textarea, LV_PCT(90));
-    lv_textarea_set_password_mode(password_textarea, true);
-    lv_textarea_set_one_line(password_textarea, true);
-    lv_textarea_set_placeholder_text(password_textarea, "Mật khẩu");
-    lv_obj_set_style_text_font(password_textarea, text_font, 0);
-
-    // Button Row: Connect & Back
-    lv_obj_t* btn_row = lv_obj_create(setup_layout);
-    lv_obj_set_size(btn_row, LV_PCT(90), 40);
-    lv_obj_set_style_pad_all(btn_row, 0, 0);
-    lv_obj_set_style_border_width(btn_row, 0, 0);
-    lv_obj_set_style_bg_opa(btn_row, LV_OPA_TRANSP, 0);
-    lv_obj_set_flex_flow(btn_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(btn_row, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-    // Back Button
-    lv_obj_t* back_btn = lv_button_create(btn_row);
-    lv_obj_set_size(back_btn, 80, 32);
-    lv_obj_t* back_label = lv_label_create(back_btn);
-    ConfigureButtonLabel(back_label, text_font);
-    lv_label_set_text(back_label, "Hủy");
-    lv_obj_center(back_label);
-    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        if (ui->keyboard) {
-            lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
-        }
-        ui->ShowMainGridPage();
-    }, LV_EVENT_CLICKED, this);
-
-    // Connect Button
-    lv_obj_t* connect_btn = lv_button_create(btn_row);
-    lv_obj_set_size(connect_btn, 80, 32);
-    lv_obj_t* conn_label = lv_label_create(connect_btn);
-    ConfigureButtonLabel(conn_label, text_font);
-    lv_label_set_text(conn_label, "Kết nối");
-    lv_obj_center(conn_label);
-
-    // Connect click callback
-    lv_obj_add_event_cb(connect_btn, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-
-        char ssid[64];
-        lv_roller_get_selected_str(ui->wifi_roller, ssid, sizeof(ssid));
-        const char* password = lv_textarea_get_text(ui->password_textarea);
-
-        if (!CanConnectToWifiSsid(ui->wifi_scan_has_results_, ssid)) {
-            ui->ShowNotification("Chọn mạng WiFi hợp lệ");
+    {
+        DisplayLockGuard lock(this);
+        if (active_page_ != PageType::kPageWifiSetup || wifi_roller == nullptr) {
             return;
         }
 
-        ESP_LOGI(TAG, "Connecting to AP: %s (Password length: %d)", ssid, (int)strlen(password));
-
-        // Hide keyboard
-        if (ui->keyboard) {
-            lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
-        }
-
-        ui->LeaveWifiSetupPage();
-        ui->ShowWifiConnectPage();
-        ui->wifi_setup_workflow_.SaveCredentialsAndReconnect(ssid, password);
-    }, LV_EVENT_CLICKED, this);
-
-    // Keyboard (overlay on screen bottom)
-    keyboard = lv_keyboard_create(lv_screen_active());
-    lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
-
-    // Trigger keyboard show/hide based on textarea focus
-    lv_obj_add_event_cb(password_textarea, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        lv_event_code_t code = lv_event_get_code(e);
-        if (code == LV_EVENT_FOCUSED) {
-            lv_keyboard_set_textarea(ui->keyboard, ui->password_textarea);
-            lv_obj_remove_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_scroll_to_view(ui->password_textarea, LV_ANIM_ON);
-        } else if (code == LV_EVENT_DEFOCUSED) {
-            lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
-        }
-    }, LV_EVENT_ALL, this);
-
-    // Hide keyboard when hitting check or cancel buttons on keyboard
-    lv_obj_add_event_cb(keyboard, [](lv_event_t* e) {
-        lv_event_code_t code = lv_event_get_code(e);
-        if (code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
-            auto* target_kb = (lv_obj_t*)lv_event_get_target(e);
-            lv_obj_add_flag(target_kb, LV_OBJ_FLAG_HIDDEN);
-        }
-    }, LV_EVENT_ALL, nullptr);
-
-    auto scan_ret = wifi_setup_workflow_.StartScan();
-    if (scan_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to start WiFi scan: %s", esp_err_to_name(scan_ret));
-        if (wifi_roller) {
-            lv_roller_set_options(wifi_roller, "Không thể quét WiFi", LV_ROLLER_MODE_NORMAL);
-        }
+        UpdateWifiScanResults(scanned_ssids, scan_ret);
     }
-
-    ApplyReadableTextColors();
 }
 
 void LvglTouchUi::ShowWifiConnectPage() {
@@ -1280,9 +1307,46 @@ void LvglTouchUi::DismissModalOverlay() {
 
 void LvglTouchUi::LeaveWifiSetupPage() {
     if (active_page_ == PageType::kPageWifiSetup) {
-        wifi_setup_workflow_.UnregisterScanDoneHandler();
         wifi_scan_has_results_ = false;
     }
+}
+
+void LvglTouchUi::ShowWifiPasswordStep(const char* ssid) {
+    if (wifi_password_label_) {
+        lv_label_set_text_fmt(wifi_password_label_, "Mật khẩu cho:\n%s", ssid);
+        lv_obj_remove_flag(wifi_password_label_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (password_textarea) {
+        lv_textarea_set_text(password_textarea, "");
+        lv_obj_remove_flag(password_textarea, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_scroll_to_view(password_textarea, LV_ANIM_ON);
+    }
+    if (wifi_select_btn_) {
+        lv_obj_add_flag(wifi_select_btn_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (wifi_connect_btn_) {
+        lv_obj_remove_flag(wifi_connect_btn_, LV_OBJ_FLAG_HIDDEN);
+    }
+    ApplyReadableTextColors();
+}
+
+void LvglTouchUi::UpdateWifiScanResults(const std::vector<std::string>& ssids, esp_err_t scan_ret) {
+    if (scan_ret != ESP_OK || ssids.empty()) {
+        wifi_scan_has_results_ = false;
+        lv_roller_set_options(wifi_roller,
+            scan_ret == ESP_ERR_NOT_FOUND ? "Không tìm thấy mạng" : "Không thể quét WiFi",
+            LV_ROLLER_MODE_NORMAL);
+    } else {
+        std::string options;
+        for (const auto& ssid : ssids) {
+            options += ssid + "\n";
+        }
+        options.pop_back();
+        wifi_scan_has_results_ = true;
+        lv_roller_set_options(wifi_roller, options.c_str(), LV_ROLLER_MODE_NORMAL);
+    }
+
+    ApplyReadableTextColors();
 }
 
 void LvglTouchUi::ResetPageWidgets() {
@@ -1295,8 +1359,12 @@ void LvglTouchUi::ResetPageWidgets() {
     }
 
     wifi_roller = nullptr;
+    wifi_password_label_ = nullptr;
     password_textarea = nullptr;
+    wifi_select_btn_ = nullptr;
+    wifi_connect_btn_ = nullptr;
     wifi_scan_has_results_ = false;
+    selected_wifi_ssid_.clear();
     chat_box = nullptr;
     mic_status_label = nullptr;
     mic_status_icon = nullptr;
@@ -1352,45 +1420,4 @@ void LvglTouchUi::HandleDeviceStateChange(DeviceState old_state, DeviceState new
     }
 
     UpdateMicStatusIndicator();
-}
-
-void LvglTouchUi::WifiScanDoneHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-    (void)event_base;
-    (void)event_id;
-    (void)event_data;
-    auto* ui = static_cast<LvglTouchUi*>(arg);
-    if (ui == nullptr || ui->active_page_ != PageType::kPageWifiSetup || ui->wifi_roller == nullptr) {
-        return;
-    }
-    ui->PopulateWifiRoller();
-}
-
-void LvglTouchUi::PopulateWifiRoller() {
-    if (active_page_ != PageType::kPageWifiSetup || wifi_roller == nullptr) {
-        return;
-    }
-
-    std::vector<std::string> unique_ssids;
-    if (!wifi_setup_workflow_.GetScannedSsids(unique_ssids)) {
-        DisplayLockGuard lock(this);
-        wifi_scan_has_results_ = false;
-        if (wifi_roller) {
-            lv_roller_set_options(wifi_roller, "Không tìm thấy mạng", LV_ROLLER_MODE_NORMAL);
-        }
-        return;
-    }
-
-    std::string options;
-    for (const auto& ssid : unique_ssids) {
-        options += ssid + "\n";
-    }
-
-    if (!options.empty()) {
-        options.pop_back();
-        DisplayLockGuard lock(this);
-        if (wifi_roller) {
-            wifi_scan_has_results_ = true;
-            lv_roller_set_options(wifi_roller, options.c_str(), LV_ROLLER_MODE_NORMAL);
-        }
-    }
 }
