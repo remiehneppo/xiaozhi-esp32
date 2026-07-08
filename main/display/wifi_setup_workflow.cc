@@ -7,61 +7,53 @@
 #include <cstring>
 #include <esp_wifi.h>
 
-WifiSetupWorkflow::~WifiSetupWorkflow() {
-    UnregisterScanDoneHandler();
+namespace {
+std::string ExtractSsid(const wifi_ap_record_t& record) {
+    const char* ssid = reinterpret_cast<const char*>(record.ssid);
+    return std::string(ssid, strnlen(ssid, sizeof(record.ssid)));
 }
 
-esp_err_t WifiSetupWorkflow::RegisterScanDoneHandler(esp_event_handler_t handler, void* arg) {
-    if (scan_handler_registered_) {
-        return ESP_OK;
+void AppendUniqueSsid(std::vector<std::string>& ssids, const std::string& ssid) {
+    if (!ssid.empty() && std::find(ssids.begin(), ssids.end(), ssid) == ssids.end()) {
+        ssids.push_back(ssid);
     }
-
-    auto ret = esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, handler, arg);
-    if (ret == ESP_OK) {
-        scan_handler_registered_ = true;
-        scan_done_handler_ = handler;
-    }
-    return ret;
+}
 }
 
-void WifiSetupWorkflow::UnregisterScanDoneHandler() {
-    if (!scan_handler_registered_ || scan_done_handler_ == nullptr) {
-        return;
-    }
+esp_err_t WifiSetupWorkflow::ScanSsids(std::vector<std::string>& ssids) {
+    ssids.clear();
 
-    esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, scan_done_handler_);
-    scan_handler_registered_ = false;
-    scan_done_handler_ = nullptr;
-}
-
-esp_err_t WifiSetupWorkflow::StartScan() {
     wifi_scan_config_t scan_config = {};
     scan_config.show_hidden = false;
     scan_config.scan_type = WIFI_SCAN_TYPE_ACTIVE;
-    return esp_wifi_scan_start(&scan_config, false);
-}
+    scan_config.scan_time.active.min = 100;
+    scan_config.scan_time.active.max = 300;
 
-bool WifiSetupWorkflow::GetScannedSsids(std::vector<std::string>& ssids) {
-    ssids.clear();
+    auto ret = esp_wifi_scan_start(&scan_config, true);
+    if (ret != ESP_OK) {
+        return ret;
+    }
 
     uint16_t ap_num = 0;
-    if (esp_wifi_scan_get_ap_num(&ap_num) != ESP_OK || ap_num == 0) {
-        return false;
+    ret = esp_wifi_scan_get_ap_num(&ap_num);
+    if (ret != ESP_OK) {
+        return ret;
+    }
+    if (ap_num == 0) {
+        return ESP_ERR_NOT_FOUND;
     }
 
     std::vector<wifi_ap_record_t> ap_records(ap_num);
-    if (esp_wifi_scan_get_ap_records(&ap_num, ap_records.data()) != ESP_OK) {
-        return false;
+    ret = esp_wifi_scan_get_ap_records(&ap_num, ap_records.data());
+    if (ret != ESP_OK) {
+        return ret;
     }
 
-    for (int i = 0; i < ap_num; i++) {
-        std::string ssid = reinterpret_cast<char*>(ap_records[i].ssid);
-        if (!ssid.empty() && std::find(ssids.begin(), ssids.end(), ssid) == ssids.end()) {
-            ssids.push_back(ssid);
-        }
+    for (uint16_t i = 0; i < ap_num; i++) {
+        AppendUniqueSsid(ssids, ExtractSsid(ap_records[i]));
     }
 
-    return !ssids.empty();
+    return ssids.empty() ? ESP_ERR_NOT_FOUND : ESP_OK;
 }
 
 void WifiSetupWorkflow::SaveCredentialsAndReconnect(const char* ssid, const char* password) {
