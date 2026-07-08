@@ -1152,6 +1152,13 @@ void LcdDisplay::SetEmotion(const char* emotion) {
 }
 
 void LcdDisplay::SetTheme(Theme* theme) {
+    if (!setup_ui_called_) {
+        Display::SetTheme(theme);
+        ESP_LOGW(TAG, "SetTheme('%s') called before SetupUI() - deferring LVGL object updates",
+                 theme != nullptr ? theme->name().c_str() : "null");
+        return;
+    }
+
     DisplayLockGuard lock(this);
     
     auto lvgl_theme = static_cast<LvglTheme*>(theme);

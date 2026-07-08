@@ -144,6 +144,12 @@ public:
 
     // Apply the correct background image when theme changes at runtime
     void SetTheme(Theme* theme) override {
+        if (!IsSetupUICalled()) {
+            Display::SetTheme(theme);
+            ESP_LOGD(TAG, "Theme recorded before LCD UI setup; touch UI owns active LVGL objects");
+            return;
+        }
+
         auto* lvgl_theme = dynamic_cast<LvglTheme*>(theme);
         if (lvgl_theme == nullptr) {
             LcdDisplay::SetTheme(theme);
@@ -300,8 +306,8 @@ private:
     void InitializeTouch() {
         esp_lcd_touch_handle_t tp = nullptr;
         esp_lcd_touch_config_t tp_cfg = {
-            .x_max = DISPLAY_WIDTH,
-            .y_max = DISPLAY_HEIGHT,
+            .x_max = TOUCH_RAW_WIDTH,
+            .y_max = TOUCH_RAW_HEIGHT,
             .rst_gpio_num = TOUCH_RESET_PIN,
             .int_gpio_num = TOUCH_INTERRUPT_PIN,
             .levels = {

@@ -62,6 +62,11 @@ void Application::Initialize() {
     auto& board = Board::GetInstance();
     SetDeviceState(kDeviceStateStarting);
 
+    auto& assets = Assets::GetInstance();
+    if (assets.partition_valid()) {
+        assets.ApplyTextFont();
+    }
+
     // Setup the display
     auto display = board.GetDisplay();
     display->Initialize(SystemInfo::GetUserAgent().c_str());

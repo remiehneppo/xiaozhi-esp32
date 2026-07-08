@@ -54,6 +54,54 @@ bool Assets::Apply(bool refresh_display_theme) {
     return strategy_ ? strategy_->Apply(this, refresh_display_theme) : false;
 }
 
+bool Assets::ApplyTextFont() {
+#if HAVE_LVGL
+    void* ptr = nullptr;
+    size_t size = 0;
+    if (!GetAssetData("index.json", ptr, size)) {
+        ESP_LOGE(TAG, "The index.json file is not found");
+        return false;
+    }
+
+    cJSON* root = cJSON_ParseWithLength(static_cast<char*>(ptr), size);
+    if (root == nullptr) {
+        ESP_LOGE(TAG, "The index.json file is not valid");
+        return false;
+    }
+
+    bool applied = false;
+    cJSON* font = cJSON_GetObjectItem(root, "text_font");
+    if (cJSON_IsString(font)) {
+        std::string fonts_text_file = font->valuestring;
+        if (GetAssetData(fonts_text_file, ptr, size)) {
+            auto text_font = std::make_shared<LvglCBinFont>(ptr);
+            if (text_font->font() != nullptr) {
+                auto& theme_manager = LvglThemeManager::GetInstance();
+                auto light_theme = theme_manager.GetTheme("light");
+                auto dark_theme = theme_manager.GetTheme("dark");
+                if (light_theme != nullptr) {
+                    light_theme->set_text_font(text_font);
+                }
+                if (dark_theme != nullptr) {
+                    dark_theme->set_text_font(text_font);
+                }
+                ESP_LOGI(TAG, "Applied text font %s before display initialization", fonts_text_file.c_str());
+                applied = true;
+            } else {
+                ESP_LOGE(TAG, "Failed to load font %s", fonts_text_file.c_str());
+            }
+        } else {
+            ESP_LOGE(TAG, "The font file %s is not found", fonts_text_file.c_str());
+        }
+    }
+
+    cJSON_Delete(root);
+    return applied;
+#else
+    return false;
+#endif
+}
+
 bool Assets::InitializePartition() {
     return strategy_ ? strategy_->InitializePartition(this) : false;
 }

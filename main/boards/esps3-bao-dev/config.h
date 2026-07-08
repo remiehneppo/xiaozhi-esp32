@@ -23,6 +23,8 @@
 #define TOUCH_I2C_SDA_PIN        GPIO_NUM_16
 #define TOUCH_RESET_PIN          GPIO_NUM_18
 #define TOUCH_INTERRUPT_PIN      GPIO_NUM_17
+#define TOUCH_RAW_WIDTH          240
+#define TOUCH_RAW_HEIGHT         320
 
 // GPIO1 拉低用于使能板载音频功放
 #define AUDIO_PA_ENABLE_PIN      GPIO_NUM_1

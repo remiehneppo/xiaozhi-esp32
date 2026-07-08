@@ -41,6 +41,13 @@ void ConfigureScrollLabel(lv_obj_t* label, const lv_font_t* font, int32_t width,
     lv_obj_set_style_text_align(label, align, 0);
 }
 
+void ConfigureSingleLineLabel(lv_obj_t* label, const lv_font_t* font, int32_t width, lv_text_align_t align = LV_TEXT_ALIGN_CENTER) {
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_width(label, width);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
+    lv_obj_set_style_text_align(label, align, 0);
+}
+
 void ConfigureButtonLabel(lv_obj_t* label, const lv_font_t* font) {
     ConfigureDotLabel(label, font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
 }
@@ -286,7 +293,7 @@ void LvglTouchUi::ShowMainGridPage() {
 
         // Text label
         lv_obj_t* txt_label = lv_label_create(btn_container);
-        ConfigureWrapLabel(txt_label, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+        ConfigureSingleLineLabel(txt_label, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
         lv_label_set_text(txt_label, label);
         if (theme) {
             lv_obj_set_style_text_color(txt_label, theme->text_color(), 0);
