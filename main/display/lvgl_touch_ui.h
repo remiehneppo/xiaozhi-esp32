@@ -6,6 +6,8 @@
 #include <lvgl.h>
 #include <esp_event.h>
 #include <esp_timer.h>
+#include <cstdint>
+#include <freertos/FreeRTOS.h>
 #include <string>
 #include <vector>
 
@@ -60,9 +62,15 @@ private:
     lv_obj_t* wifi_select_btn_ = nullptr;
     lv_obj_t* wifi_connect_btn_ = nullptr;
     bool wifi_scan_has_results_ = false;
+    uint32_t wifi_scan_generation_ = 0;
     std::string selected_wifi_ssid_;
     void ShowWifiPasswordStep(const char* ssid);
     void UpdateWifiScanResults(const std::vector<std::string>& ssids, esp_err_t scan_ret);
+    void StartWifiScanTask(uint32_t generation);
+    static void WifiScanTask(void* arg);
+    portMUX_TYPE wifi_scan_task_mux_ = portMUX_INITIALIZER_UNLOCKED;
+    uint32_t wifi_scan_tasks_in_flight_ = 0;
+    bool wifi_scan_shutdown_ = false;
 
     // Modal widgets
     lv_obj_t* modal_overlay_ = nullptr;

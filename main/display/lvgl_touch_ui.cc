@@ -8,6 +8,8 @@
 #include "audio_codec.h"
 #include "settings.h"
 #include <esp_log.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <esp_err.h>
 #include <time.h>
 #include <vector>
@@ -19,6 +21,14 @@ LV_FONT_DECLARE(BUILTIN_TEXT_FONT);
 LV_FONT_DECLARE(BUILTIN_ICON_FONT);
 
 namespace {
+
+struct WifiScanTaskPayload {
+    LvglTouchUi* ui;
+    uint32_t generation;
+    std::vector<std::string> ssids;
+    esp_err_t scan_ret;
+};
+
 
 void ConfigureWrapLabel(lv_obj_t* label, const lv_font_t* font, int32_t width, lv_text_align_t align = LV_TEXT_ALIGN_LEFT) {
     lv_obj_set_style_text_font(label, font, 0);
@@ -79,6 +89,20 @@ LvglTouchUi::LvglTouchUi(Display* display) : TouchUi(display) {
 }
 
 LvglTouchUi::~LvglTouchUi() {
+    portENTER_CRITICAL(&wifi_scan_task_mux_);
+    wifi_scan_shutdown_ = true;
+    portEXIT_CRITICAL(&wifi_scan_task_mux_);
+
+    while (true) {
+        uint32_t tasks_in_flight = 0;
+        portENTER_CRITICAL(&wifi_scan_task_mux_);
+        tasks_in_flight = wifi_scan_tasks_in_flight_;
+        portEXIT_CRITICAL(&wifi_scan_task_mux_);
+        if (tasks_in_flight == 0) {
+            break;
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
     if (notification_timer_ != nullptr) {
         esp_timer_stop(notification_timer_);
         esp_timer_delete(notification_timer_);
@@ -1082,12 +1106,8 @@ void LvglTouchUi::ShowWifiSetupPage() {
         ApplyReadableTextColors();
     }
 
-    std::vector<std::string> ssids;
-    auto scan_ret = wifi_setup_workflow_.ScanSsids(ssids);
-
-    DisplayLockGuard lock(this);
-    UpdateWifiScanResults(ssids, scan_ret);
-    ApplyReadableTextColors();
+    const uint32_t scan_generation = ++wifi_scan_generation_;
+    StartWifiScanTask(scan_generation);
 }
 
 void LvglTouchUi::ShowWifiConnectPage() {
@@ -1280,6 +1300,7 @@ void LvglTouchUi::DismissModalOverlay() {
 
 void LvglTouchUi::LeaveWifiSetupPage() {
     if (active_page_ == PageType::kPageWifiSetup) {
+        ++wifi_scan_generation_;
         wifi_scan_has_results_ = false;
         selected_wifi_ssid_.clear();
     }
@@ -1356,6 +1377,72 @@ void LvglTouchUi::HandleDeviceStateChange(DeviceState old_state, DeviceState new
     }
 
     UpdateMicStatusIndicator();
+}
+
+void LvglTouchUi::StartWifiScanTask(uint32_t generation) {
+    auto* payload = new WifiScanTaskPayload();
+    payload->ui = this;
+    payload->generation = generation;
+    payload->scan_ret = ESP_FAIL;
+
+    portENTER_CRITICAL(&wifi_scan_task_mux_);
+    wifi_scan_tasks_in_flight_++;
+    portEXIT_CRITICAL(&wifi_scan_task_mux_);
+
+    BaseType_t task_created = xTaskCreate([](void* arg) {
+        LvglTouchUi::WifiScanTask(arg);
+    }, "wifi_ui_scan", 4096, payload, 3, nullptr);
+
+    if (task_created != pdPASS) {
+        ESP_LOGE(TAG, "Failed to start WiFi scan task");
+        delete payload;
+
+        portENTER_CRITICAL(&wifi_scan_task_mux_);
+        if (wifi_scan_tasks_in_flight_ > 0) {
+            wifi_scan_tasks_in_flight_--;
+        }
+        portEXIT_CRITICAL(&wifi_scan_task_mux_);
+
+        DisplayLockGuard lock(this);
+        UpdateWifiScanResults({}, ESP_ERR_NO_MEM);
+        ApplyReadableTextColors();
+        return;
+    }
+}
+
+void LvglTouchUi::WifiScanTask(void* arg) {
+    auto* payload = static_cast<WifiScanTaskPayload*>(arg);
+    auto* ui = payload != nullptr ? payload->ui : nullptr;
+
+    if (payload == nullptr || ui == nullptr) {
+        delete payload;
+        vTaskDelete(nullptr);
+        return;
+    }
+
+    payload->scan_ret = ui->wifi_setup_workflow_.ScanSsids(payload->ssids);
+
+    bool should_shutdown = false;
+    portENTER_CRITICAL(&ui->wifi_scan_task_mux_);
+    should_shutdown = ui->wifi_scan_shutdown_;
+    portEXIT_CRITICAL(&ui->wifi_scan_task_mux_);
+
+    if (!should_shutdown) {
+        DisplayLockGuard lock(ui);
+        if (ui->active_page_ == PageType::kPageWifiSetup && payload->generation == ui->wifi_scan_generation_) {
+            ui->UpdateWifiScanResults(payload->ssids, payload->scan_ret);
+            ui->ApplyReadableTextColors();
+        }
+    }
+
+    portENTER_CRITICAL(&ui->wifi_scan_task_mux_);
+    if (ui->wifi_scan_tasks_in_flight_ > 0) {
+        ui->wifi_scan_tasks_in_flight_--;
+    }
+    portEXIT_CRITICAL(&ui->wifi_scan_task_mux_);
+
+    delete payload;
+    vTaskDelete(nullptr);
 }
 
 void LvglTouchUi::ShowWifiPasswordStep(const char* ssid) {
