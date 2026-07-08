@@ -61,7 +61,7 @@ void ConfigureSingleLineLabel(lv_obj_t* label, const lv_font_t* font, int32_t wi
 
 void ConfigureButtonLabel(lv_obj_t* label, const lv_font_t* font) {
     lv_obj_set_style_text_font(label, font, 0);
-    lv_obj_set_width(label, LV_PCT(90));
+    lv_obj_set_width(label, LV_PCT(100));
     lv_obj_set_style_max_width(label, LV_PCT(100), 0);
     lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
@@ -428,10 +428,10 @@ void LvglTouchUi::ShowChatPage() {
 
     // Back Button (left)
     lv_obj_t* back_btn = lv_button_create(bottom_panel);
-    lv_obj_set_size(back_btn, 65, 30);
+    lv_obj_set_size(back_btn, 96, 30);
     lv_obj_t* back_label = lv_label_create(back_btn);
     ConfigureButtonLabel(back_label, text_font);
-    lv_label_set_text(back_label, FONT_AWESOME_ARROW_LEFT);
+    lv_label_set_text(back_label, FONT_AWESOME_ARROW_LEFT " Trở về");
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
@@ -729,7 +729,7 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_label_set_text(ota_lbl, "Cấu hình OTA:");
 
     lv_obj_t* ota_btn = lv_button_create(ota_row);
-    lv_obj_set_size(ota_btn, 60, 30);
+    lv_obj_set_size(ota_btn, 72, 30);
     lv_obj_t* ota_btn_lbl = lv_label_create(ota_btn);
     ConfigureButtonLabel(ota_btn_lbl, text_font);
     lv_label_set_text(ota_btn_lbl, "Sửa");
@@ -847,7 +847,7 @@ void LvglTouchUi::ShowSettingsPage() {
     lv_label_set_text(wifi_lbl, "Thiết lập WiFi:");
 
     lv_obj_t* wifi_btn = lv_button_create(wifi_row);
-    lv_obj_set_size(wifi_btn, 60, 30);
+    lv_obj_set_size(wifi_btn, 72, 30);
     lv_obj_t* wifi_btn_lbl = lv_label_create(wifi_btn);
     ConfigureButtonLabel(wifi_btn_lbl, text_font);
     lv_label_set_text(wifi_btn_lbl, "Quét");
