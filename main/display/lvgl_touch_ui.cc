@@ -109,13 +109,7 @@ void HandleMicActionClicked(lv_event_t* e) {
     }
 
     auto& app = Application::GetInstance();
-    if (app.GetDeviceState() == kDeviceStateListening ||
-        app.GetDeviceState() == kDeviceStateAudioTesting) {
-        app.StopListening();
-        return;
-    }
-
-    app.StartListening();
+    app.ToggleChatState();
 }
 
 lv_obj_tree_walk_res_t ApplyLabelTextColor(lv_obj_t* obj, void* user_data) {
@@ -1821,7 +1815,12 @@ void LvglTouchUi::HandleDeviceStateChange(DeviceState old_state, DeviceState new
     current_state_ = new_state;
     wifi_connect_attempts_ = GetNextWifiConnectAttempts(wifi_connect_attempts_, new_state);
 
-    switch (GetTouchUiPageTarget(old_state, new_state)) {
+    TouchUiPageTarget page_target = GetTouchUiPageTarget(old_state, new_state);
+    if (active_page_ == PageType::kPageChat && page_target == TouchUiPageTarget::kMainGrid) {
+        page_target = TouchUiPageTarget::kNone;
+    }
+
+    switch (page_target) {
         case TouchUiPageTarget::kWifiConnect:
             ShowWifiConnectPage();
             break;
