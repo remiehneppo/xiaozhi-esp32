@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cstring>
 #include <esp_wifi.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 namespace {
 std::string ExtractSsid(const wifi_ap_record_t& record) {
@@ -26,34 +28,53 @@ esp_err_t WifiSetupWorkflow::ScanSsids(std::vector<std::string>& ssids) {
     wifi_scan_config_t scan_config = {};
     scan_config.show_hidden = false;
     scan_config.scan_type = WIFI_SCAN_TYPE_ACTIVE;
-    scan_config.scan_time.active.min = 100;
-    scan_config.scan_time.active.max = 300;
+    scan_config.scan_time.active.min = 120;
+    scan_config.scan_time.active.max = 360;
 
-    auto ret = esp_wifi_scan_start(&scan_config, true);
-    if (ret != ESP_OK) {
-        return ret;
+    esp_err_t last_ret = ESP_FAIL;
+    constexpr int kMaxScanAttempts = 3;
+    for (int attempt = 0; attempt < kMaxScanAttempts; attempt++) {
+        esp_wifi_scan_stop();
+        vTaskDelay(pdMS_TO_TICKS(120 + attempt * 120));
+
+        auto ret = esp_wifi_scan_start(&scan_config, true);
+        if (ret != ESP_OK) {
+            last_ret = ret;
+            continue;
+        }
+
+        uint16_t ap_num = 0;
+        ret = esp_wifi_scan_get_ap_num(&ap_num);
+        if (ret != ESP_OK) {
+            last_ret = ret;
+            continue;
+        }
+        if (ap_num == 0) {
+            last_ret = ESP_ERR_NOT_FOUND;
+            continue;
+        }
+
+        std::vector<wifi_ap_record_t> ap_records(ap_num);
+        ret = esp_wifi_scan_get_ap_records(&ap_num, ap_records.data());
+        if (ret != ESP_OK) {
+            last_ret = ret;
+            continue;
+        }
+
+        std::sort(ap_records.begin(), ap_records.end(), [](const wifi_ap_record_t& a, const wifi_ap_record_t& b) {
+            return a.rssi > b.rssi;
+        });
+        for (uint16_t i = 0; i < ap_num; i++) {
+            AppendUniqueSsid(ssids, ExtractSsid(ap_records[i]));
+        }
+
+        if (!ssids.empty()) {
+            return ESP_OK;
+        }
+        last_ret = ESP_ERR_NOT_FOUND;
     }
 
-    uint16_t ap_num = 0;
-    ret = esp_wifi_scan_get_ap_num(&ap_num);
-    if (ret != ESP_OK) {
-        return ret;
-    }
-    if (ap_num == 0) {
-        return ESP_ERR_NOT_FOUND;
-    }
-
-    std::vector<wifi_ap_record_t> ap_records(ap_num);
-    ret = esp_wifi_scan_get_ap_records(&ap_num, ap_records.data());
-    if (ret != ESP_OK) {
-        return ret;
-    }
-
-    for (uint16_t i = 0; i < ap_num; i++) {
-        AppendUniqueSsid(ssids, ExtractSsid(ap_records[i]));
-    }
-
-    return ssids.empty() ? ESP_ERR_NOT_FOUND : ESP_OK;
+    return ssids.empty() ? last_ret : ESP_OK;
 }
 
 void WifiSetupWorkflow::SaveCredentialsAndReconnect(const char* ssid, const char* password) {
