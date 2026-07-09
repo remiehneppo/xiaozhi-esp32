@@ -18,6 +18,9 @@ public:
         kPageChat,
         kPageSettings,
         kPageAbout,
+        kPageFileManager,
+        kPageMusicPlayer,
+        kPageVideoPlayer,
         kPageWifiSetup,
         kPageWifiConnect
     };
@@ -42,6 +45,9 @@ private:
     void ShowChatPage();
     void ShowSettingsPage();
     void ShowAboutPage();
+    void ShowFileManagerPage();
+    void ShowMusicPlayerPage();
+    void ShowVideoPlayerPage();
     void ShowWifiSetupPage();
     void ShowWifiConnectPage();
     void ResetPageWidgets();

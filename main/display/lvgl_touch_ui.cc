@@ -52,18 +52,18 @@ void ConfigureScrollLabel(lv_obj_t* label, const lv_font_t* font, int32_t width,
     lv_obj_set_style_text_align(label, align, 0);
 }
 
-void ConfigureSingleLineLabel(lv_obj_t* label, const lv_font_t* font, int32_t width, lv_text_align_t align = LV_TEXT_ALIGN_CENTER) {
-    lv_obj_set_style_text_font(label, font, 0);
-    lv_obj_set_width(label, width);
-    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
-    lv_obj_set_style_text_align(label, align, 0);
-}
-
 void ConfigureButtonLabel(lv_obj_t* label, const lv_font_t* font) {
     lv_obj_set_style_text_font(label, font, 0);
     lv_obj_set_width(label, LV_PCT(100));
     lv_obj_set_style_max_width(label, LV_PCT(100), 0);
     lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+}
+
+void ConfigureTileLabel(lv_obj_t* label, const lv_font_t* font) {
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_width(label, LV_PCT(100));
+    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
 }
 
@@ -288,6 +288,7 @@ void LvglTouchUi::UpdateStatusBar(bool update_all) {
     }
 }
 
+
 void LvglTouchUi::ShowMainGridPage() {
     DisplayLockGuard lock(this);
     ResetPageWidgets();
@@ -299,52 +300,57 @@ void LvglTouchUi::ShowMainGridPage() {
     auto text_font = GetTextFont();
     auto large_icon_font = GetLargeIconFont();
 
-    // 3x2 grid layout setup
+    lv_obj_t* home_layout = lv_obj_create(page_container);
+    lv_obj_set_size(home_layout, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_radius(home_layout, 0, 0);
+    lv_obj_set_style_pad_all(home_layout, 4, 0);
+    lv_obj_set_style_pad_row(home_layout, 6, 0);
+    lv_obj_set_style_pad_column(home_layout, 6, 0);
+    lv_obj_set_style_border_width(home_layout, 0, 0);
+    lv_obj_set_style_bg_opa(home_layout, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(home_layout, LV_FLEX_FLOW_COLUMN);
+
+    lv_obj_t* home_title = lv_label_create(home_layout);
+    ConfigureWrapLabel(home_title, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+    lv_label_set_text(home_title, "Trang chủ");
+
+    lv_obj_t* tile_grid = lv_obj_create(home_layout);
+    lv_obj_set_width(tile_grid, LV_PCT(100));
+    lv_obj_set_flex_grow(tile_grid, 1);
+    lv_obj_set_style_radius(tile_grid, 0, 0);
+    lv_obj_set_style_pad_all(tile_grid, 0, 0);
+    lv_obj_set_style_border_width(tile_grid, 0, 0);
+    lv_obj_set_style_bg_opa(tile_grid, LV_OPA_TRANSP, 0);
+    lv_obj_set_layout(tile_grid, LV_LAYOUT_GRID);
+
     static int32_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
     static int32_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    lv_obj_set_style_grid_column_dsc_array(tile_grid, col_dsc, 0);
+    lv_obj_set_style_grid_row_dsc_array(tile_grid, row_dsc, 0);
 
-    lv_obj_t* grid = lv_obj_create(page_container);
-    lv_obj_set_size(grid, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_style_grid_column_dsc_array(grid, col_dsc, 0);
-    lv_obj_set_style_grid_row_dsc_array(grid, row_dsc, 0);
-    lv_obj_set_layout(grid, LV_LAYOUT_GRID);
-    lv_obj_set_style_radius(grid, 0, 0);
-    lv_obj_set_style_pad_all(grid, 0, 0);
-    lv_obj_set_style_border_width(grid, 0, 0);
-    lv_obj_set_style_bg_opa(grid, LV_OPA_TRANSP, 0);
-
-    // Helper to create grid button item
-    auto create_grid_button = [&](int col, int row, const char* icon, const char* label, lv_event_cb_t cb) {
-        lv_obj_t* btn_container = lv_obj_create(grid);
-        lv_obj_set_grid_cell(btn_container, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
-        lv_obj_set_size(btn_container, LV_PCT(100), LV_PCT(100));
-        lv_obj_set_style_radius(btn_container, 0, 0);
-        lv_obj_set_style_pad_all(btn_container, 2, 0);
-        lv_obj_set_style_border_width(btn_container, 0, 0);
-        lv_obj_set_style_bg_opa(btn_container, LV_OPA_TRANSP, 0);
-        lv_obj_set_flex_flow(btn_container, LV_FLEX_FLOW_COLUMN);
-        lv_obj_set_flex_align(btn_container, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-        // Circular button
-        lv_obj_t* btn = lv_obj_create(btn_container);
-        lv_obj_set_size(btn, 50, 50);
-        lv_obj_set_style_radius(btn, LV_RADIUS_CIRCLE, 0);
+    auto create_tile = [&](int col, int row, const char* icon, const char* label, lv_event_cb_t cb) {
+        lv_obj_t* tile = lv_button_create(tile_grid);
+        lv_obj_set_grid_cell(tile, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
+        lv_obj_set_style_radius(tile, 8, 0);
+        lv_obj_set_style_pad_all(tile, 6, 0);
+        lv_obj_set_style_border_width(tile, 1, 0);
+        lv_obj_set_flex_flow(tile, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_align(tile, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         if (theme) {
-            lv_obj_set_style_bg_color(btn, theme->user_bubble_color(), 0);
+            lv_obj_set_style_bg_color(tile, theme->assistant_bubble_color(), 0);
+            lv_obj_set_style_bg_opa(tile, LV_OPA_80, 0);
+            lv_obj_set_style_border_color(tile, theme->border_color(), 0);
         } else {
-            lv_obj_set_style_bg_color(btn, lv_color_hex(0x007ACC), 0);
+            lv_obj_set_style_bg_color(tile, lv_color_hex(0x2A2A2A), 0);
         }
-        lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_add_event_cb(btn, cb, LV_EVENT_CLICKED, this);
+        lv_obj_add_event_cb(tile, cb, LV_EVENT_CLICKED, this);
 
-        lv_obj_t* icon_label = lv_label_create(btn);
+        lv_obj_t* icon_label = lv_label_create(tile);
         lv_obj_set_style_text_font(icon_label, large_icon_font, 0);
         lv_label_set_text(icon_label, icon);
-        lv_obj_center(icon_label);
 
-        // Text label
-        lv_obj_t* txt_label = lv_label_create(btn_container);
-        ConfigureSingleLineLabel(txt_label, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+        lv_obj_t* txt_label = lv_label_create(tile);
+        ConfigureTileLabel(txt_label, text_font);
         lv_label_set_text(txt_label, label);
         if (theme) {
             lv_obj_set_style_text_color(txt_label, theme->text_color(), 0);
@@ -353,32 +359,35 @@ void LvglTouchUi::ShowMainGridPage() {
         }
     };
 
-    // Col 0, Row 0: AI Agent
-    create_grid_button(0, 0, FONT_AWESOME_MICROCHIP_AI, "AI Agent", [](lv_event_t* e) {
+    create_tile(0, 0, FONT_AWESOME_MICROCHIP_AI, "AI Agent", [](lv_event_t* e) {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
         ui->ShowChatPage();
     });
 
-    // Col 1, Row 0: Settings
-    create_grid_button(1, 0, FONT_AWESOME_GEAR, "Cài đặt", [](lv_event_t* e) {
+    create_tile(1, 0, FONT_AWESOME_GEAR, "Cài đặt", [](lv_event_t* e) {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
         ui->ShowSettingsPage();
     });
 
-    // Col 2, Row 0: About
-    create_grid_button(2, 0, FONT_AWESOME_CIRCLE_INFO, "About", [](lv_event_t* e) {
+    create_tile(2, 0, FONT_AWESOME_CIRCLE_INFO, "About", [](lv_event_t* e) {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
         ui->ShowAboutPage();
     });
 
-    // Row 1 placeholders
-    for (int col = 0; col < 3; ++col) {
-        lv_obj_t* placeholder = lv_obj_create(grid);
-        lv_obj_set_grid_cell(placeholder, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
-        lv_obj_set_size(placeholder, LV_PCT(100), LV_PCT(100));
-        lv_obj_set_style_bg_opa(placeholder, LV_OPA_TRANSP, 0);
-        lv_obj_set_style_border_width(placeholder, 0, 0);
-    }
+    create_tile(0, 1, FONT_AWESOME_SD_CARD, "Quản lý tệp", [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowFileManagerPage();
+    });
+
+    create_tile(1, 1, FONT_AWESOME_MUSIC, "Phát nhạc", [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowMusicPlayerPage();
+    });
+
+    create_tile(2, 1, FONT_AWESOME_IMAGE, "Phát video", [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowVideoPlayerPage();
+    });
 
     ApplyReadableTextColors();
 }
@@ -622,6 +631,7 @@ void LvglTouchUi::UpdateMicStatusIndicator() {
 }
 
 void LvglTouchUi::ShowSettingsPage() {
+
     DisplayLockGuard lock(this);
     ResetPageWidgets();
 
@@ -880,6 +890,7 @@ void LvglTouchUi::ShowSettingsPage() {
     ApplyReadableTextColors();
 }
 
+
 void LvglTouchUi::ShowAboutPage() {
     DisplayLockGuard lock(this);
     ResetPageWidgets();
@@ -890,7 +901,6 @@ void LvglTouchUi::ShowAboutPage() {
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
     auto text_font = GetTextFont();
 
-    // Create container for details
     lv_obj_t* about_layout = lv_obj_create(page_container);
     lv_obj_set_size(about_layout, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_radius(about_layout, 0, 0);
@@ -901,28 +911,6 @@ void LvglTouchUi::ShowAboutPage() {
     lv_obj_set_style_pad_row(about_layout, 8, 0);
     lv_obj_set_scroll_dir(about_layout, LV_DIR_VER);
     lv_obj_set_scrollbar_mode(about_layout, LV_SCROLLBAR_MODE_AUTO);
-
-    // Dynamic info retrieval
-    std::string board_type = Board::GetInstance().GetBoardType();
-    std::string uuid = Board::GetInstance().GetUuid();
-    std::string mac = SystemInfo::GetMacAddress();
-
-    std::string ip = "Chưa kết nối";
-    if (WifiManager::GetInstance().IsConnected()) {
-        ip = WifiManager::GetInstance().GetIpAddress();
-    }
-
-    float cpu_temp = 0.0f;
-    std::string temp_str = "N/A";
-    if (Board::GetInstance().GetTemperature(cpu_temp)) {
-        char buf[32];
-        snprintf(buf, sizeof(buf), "%.1f C", cpu_temp);
-        temp_str = buf;
-    }
-
-    const esp_app_desc_t* app_desc = esp_app_get_description();
-    std::string fw_version = app_desc ? app_desc->version : "Unknown";
-    const char* storage_status = Board::GetInstance().GetStorageStatusText();
 
     auto create_about_row = [&](const char* label_text, const std::string& value_text) {
         lv_obj_t* row = lv_obj_create(about_layout);
@@ -958,6 +946,27 @@ void LvglTouchUi::ShowAboutPage() {
         return row;
     };
 
+    std::string board_type = Board::GetInstance().GetBoardType();
+    std::string uuid = Board::GetInstance().GetUuid();
+    std::string mac = SystemInfo::GetMacAddress();
+
+    std::string ip = "Chưa kết nối";
+    if (WifiManager::GetInstance().IsConnected()) {
+        ip = WifiManager::GetInstance().GetIpAddress();
+    }
+
+    float cpu_temp = 0.0f;
+    std::string temp_str = "N/A";
+    if (Board::GetInstance().GetTemperature(cpu_temp)) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.1f C", cpu_temp);
+        temp_str = buf;
+    }
+
+    const esp_app_desc_t* app_desc = esp_app_get_description();
+    std::string fw_version = app_desc ? app_desc->version : "Unknown";
+    const char* storage_status = Board::GetInstance().GetStorageStatusText();
+
     create_about_row("Thiết bị:", board_type);
     create_about_row("UUID:", uuid);
     create_about_row("Địa chỉ MAC:", mac);
@@ -968,7 +977,6 @@ void LvglTouchUi::ShowAboutPage() {
         create_about_row("Lưu trữ:", storage_status);
     }
 
-    // Back Button
     lv_obj_t* back_row = lv_obj_create(about_layout);
     lv_obj_set_size(back_row, LV_PCT(100), 35);
     lv_obj_set_style_pad_all(back_row, 0, 0);
@@ -991,7 +999,397 @@ void LvglTouchUi::ShowAboutPage() {
     ApplyReadableTextColors();
 }
 
+void LvglTouchUi::ShowFileManagerPage() {
+    DisplayLockGuard lock(this);
+    ResetPageWidgets();
+    active_page_ = PageType::kPageFileManager;
+    lv_obj_clean(page_container);
+
+    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
+    auto text_font = GetTextFont();
+    auto large_icon_font = GetLargeIconFont();
+
+    lv_obj_t* layout = lv_obj_create(page_container);
+    lv_obj_set_size(layout, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_radius(layout, 0, 0);
+    lv_obj_set_style_pad_all(layout, 6, 0);
+    lv_obj_set_style_border_width(layout, 0, 0);
+    lv_obj_set_style_bg_opa(layout, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(layout, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(layout, 6, 0);
+
+    lv_obj_t* header = lv_obj_create(layout);
+    lv_obj_set_size(header, LV_PCT(100), 34);
+    lv_obj_set_style_radius(header, 0, 0);
+    lv_obj_set_style_pad_all(header, 0, 0);
+    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(header, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t* title = lv_label_create(header);
+    ConfigureWrapLabel(title, text_font, 150, LV_TEXT_ALIGN_LEFT);
+    lv_label_set_text(title, "Quản lý tệp");
+
+    lv_obj_t* back_btn = lv_button_create(header);
+    lv_obj_set_size(back_btn, 72, 30);
+    lv_obj_t* back_lbl = lv_label_create(back_btn);
+    ConfigureButtonLabel(back_lbl, text_font);
+    lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
+    lv_obj_center(back_lbl);
+    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowMainGridPage();
+    }, LV_EVENT_CLICKED, this);
+
+    lv_obj_t* status_card = lv_obj_create(layout);
+    lv_obj_set_size(status_card, LV_PCT(100), 44);
+    lv_obj_set_style_radius(status_card, 8, 0);
+    lv_obj_set_style_pad_all(status_card, 6, 0);
+    lv_obj_set_style_border_width(status_card, 1, 0);
+    lv_obj_set_flex_flow(status_card, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(status_card, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    if (theme) {
+        lv_obj_set_style_bg_color(status_card, theme->assistant_bubble_color(), 0);
+        lv_obj_set_style_bg_opa(status_card, LV_OPA_70, 0);
+        lv_obj_set_style_border_color(status_card, theme->border_color(), 0);
+    }
+
+    lv_obj_t* status_icon = lv_label_create(status_card);
+    lv_obj_set_style_text_font(status_icon, large_icon_font, 0);
+    lv_label_set_text(status_icon, FONT_AWESOME_SD_CARD);
+
+    lv_obj_t* status_text = lv_label_create(status_card);
+    ConfigureWrapLabel(status_text, text_font, LV_PCT(100), LV_TEXT_ALIGN_LEFT);
+    lv_label_set_text(status_text, "Giao diện tệp mẫu - chưa gắn danh sách SD thật");
+
+    lv_obj_t* list = lv_obj_create(layout);
+    lv_obj_set_width(list, LV_PCT(100));
+    lv_obj_set_flex_grow(list, 1);
+    lv_obj_set_style_radius(list, 0, 0);
+    lv_obj_set_style_pad_all(list, 0, 0);
+    lv_obj_set_style_border_width(list, 0, 0);
+    lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(list, 6, 0);
+
+    auto create_file_row = [&](const char* icon, const char* name, const char* meta) {
+        lv_obj_t* row = lv_obj_create(list);
+        lv_obj_set_size(row, LV_PCT(100), 48);
+        lv_obj_set_style_radius(row, 8, 0);
+        lv_obj_set_style_pad_all(row, 6, 0);
+        lv_obj_set_style_border_width(row, 1, 0);
+        lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        if (theme) {
+            lv_obj_set_style_bg_color(row, theme->assistant_bubble_color(), 0);
+            lv_obj_set_style_bg_opa(row, LV_OPA_50, 0);
+            lv_obj_set_style_border_color(row, theme->border_color(), 0);
+        }
+
+        lv_obj_t* row_icon = lv_label_create(row);
+        lv_obj_set_style_text_font(row_icon, large_icon_font, 0);
+        lv_label_set_text(row_icon, icon);
+
+        lv_obj_t* row_texts = lv_obj_create(row);
+        lv_obj_set_flex_grow(row_texts, 1);
+        lv_obj_set_style_radius(row_texts, 0, 0);
+        lv_obj_set_style_pad_all(row_texts, 0, 0);
+        lv_obj_set_style_border_width(row_texts, 0, 0);
+        lv_obj_set_style_bg_opa(row_texts, LV_OPA_TRANSP, 0);
+        lv_obj_set_flex_flow(row_texts, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_style_pad_row(row_texts, 0, 0);
+
+        lv_obj_t* row_name = lv_label_create(row_texts);
+        ConfigureWrapLabel(row_name, text_font, LV_PCT(100), LV_TEXT_ALIGN_LEFT);
+        lv_label_set_text(row_name, name);
+
+        lv_obj_t* row_meta = lv_label_create(row_texts);
+        ConfigureWrapLabel(row_meta, text_font, LV_PCT(100), LV_TEXT_ALIGN_LEFT);
+        lv_label_set_text(row_meta, meta);
+    };
+
+    create_file_row(FONT_AWESOME_MUSIC, "music/", "Danh sách mẫu - chờ nối SD");
+    create_file_row(FONT_AWESOME_IMAGE, "video/", "Danh sách mẫu - chờ nối SD");
+    create_file_row(FONT_AWESOME_COMMENT, "recordings/", "Danh sách mẫu - chờ nối SD");
+
+    ApplyReadableTextColors();
+}
+
+void LvglTouchUi::ShowMusicPlayerPage() {
+    DisplayLockGuard lock(this);
+    ResetPageWidgets();
+    active_page_ = PageType::kPageMusicPlayer;
+    lv_obj_clean(page_container);
+
+    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
+    auto text_font = GetTextFont();
+    auto large_icon_font = GetLargeIconFont();
+
+    lv_obj_t* layout = lv_obj_create(page_container);
+    lv_obj_set_size(layout, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_radius(layout, 0, 0);
+    lv_obj_set_style_pad_all(layout, 6, 0);
+    lv_obj_set_style_border_width(layout, 0, 0);
+    lv_obj_set_style_bg_opa(layout, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(layout, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(layout, 6, 0);
+
+    lv_obj_t* header = lv_obj_create(layout);
+    lv_obj_set_size(header, LV_PCT(100), 34);
+    lv_obj_set_style_radius(header, 0, 0);
+    lv_obj_set_style_pad_all(header, 0, 0);
+    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(header, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t* title = lv_label_create(header);
+    ConfigureWrapLabel(title, text_font, 150, LV_TEXT_ALIGN_LEFT);
+    lv_label_set_text(title, "Phát nhạc");
+
+    lv_obj_t* back_btn = lv_button_create(header);
+    lv_obj_set_size(back_btn, 72, 30);
+    lv_obj_t* back_lbl = lv_label_create(back_btn);
+    ConfigureButtonLabel(back_lbl, text_font);
+    lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
+    lv_obj_center(back_lbl);
+    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowMainGridPage();
+    }, LV_EVENT_CLICKED, this);
+
+    lv_obj_t* player_card = lv_obj_create(layout);
+    lv_obj_set_width(player_card, LV_PCT(100));
+    lv_obj_set_flex_grow(player_card, 1);
+    lv_obj_set_style_radius(player_card, 8, 0);
+    lv_obj_set_style_pad_all(player_card, 8, 0);
+    lv_obj_set_style_border_width(player_card, 1, 0);
+    lv_obj_set_flex_flow(player_card, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(player_card, 6, 0);
+    if (theme) {
+        lv_obj_set_style_bg_color(player_card, theme->assistant_bubble_color(), 0);
+        lv_obj_set_style_bg_opa(player_card, LV_OPA_70, 0);
+        lv_obj_set_style_border_color(player_card, theme->border_color(), 0);
+    }
+
+    lv_obj_t* art = lv_obj_create(player_card);
+    lv_obj_set_size(art, LV_PCT(100), 72);
+    lv_obj_set_style_radius(art, 8, 0);
+    lv_obj_set_style_pad_all(art, 0, 0);
+    lv_obj_set_style_border_width(art, 0, 0);
+    lv_obj_set_style_bg_opa(art, LV_OPA_40, 0);
+    lv_obj_set_flex_flow(art, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(art, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t* art_icon = lv_label_create(art);
+    lv_obj_set_style_text_font(art_icon, large_icon_font, 0);
+    lv_label_set_text(art_icon, FONT_AWESOME_MUSIC);
+
+    lv_obj_t* song_name = lv_label_create(player_card);
+    ConfigureWrapLabel(song_name, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+    lv_label_set_text(song_name, "Bài hát mẫu.wav");
+
+    lv_obj_t* song_meta = lv_label_create(player_card);
+    ConfigureWrapLabel(song_meta, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+    lv_label_set_text(song_meta, "MP3 / WAV từ thẻ SD");
+
+    lv_obj_t* progress = lv_bar_create(player_card);
+    lv_obj_set_width(progress, LV_PCT(100));
+    lv_bar_set_range(progress, 0, 100);
+    lv_bar_set_value(progress, 34, LV_ANIM_OFF);
+
+    lv_obj_t* time_row = lv_obj_create(player_card);
+    lv_obj_set_size(time_row, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_style_radius(time_row, 0, 0);
+    lv_obj_set_style_pad_all(time_row, 0, 0);
+    lv_obj_set_style_border_width(time_row, 0, 0);
+    lv_obj_set_style_bg_opa(time_row, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(time_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(time_row, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t* time_left = lv_label_create(time_row);
+    ConfigureWrapLabel(time_left, text_font, 60, LV_TEXT_ALIGN_LEFT);
+    lv_label_set_text(time_left, "00:34");
+
+    lv_obj_t* time_right = lv_label_create(time_row);
+    ConfigureWrapLabel(time_right, text_font, 60, LV_TEXT_ALIGN_RIGHT);
+    lv_label_set_text(time_right, "03:12");
+
+    lv_obj_t* controls = lv_obj_create(player_card);
+    lv_obj_set_size(controls, LV_PCT(100), 42);
+    lv_obj_set_style_radius(controls, 0, 0);
+    lv_obj_set_style_pad_all(controls, 0, 0);
+    lv_obj_set_style_border_width(controls, 0, 0);
+    lv_obj_set_style_bg_opa(controls, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(controls, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(controls, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    auto create_control = [&](const char* icon, int width) {
+        lv_obj_t* btn = lv_button_create(controls);
+        lv_obj_set_size(btn, width, 36);
+        lv_obj_t* lbl = lv_label_create(btn);
+        ConfigureButtonLabel(lbl, text_font);
+        lv_label_set_text(lbl, icon);
+        lv_obj_center(lbl);
+        lv_obj_add_state(btn, LV_STATE_DISABLED);
+        return btn;
+    };
+
+    create_control(FONT_AWESOME_BACKWARD_STEP, 60);
+    lv_obj_t* play_btn = create_control(FONT_AWESOME_PLAY, 72);
+    create_control(FONT_AWESOME_FORWARD_STEP, 60);
+
+    lv_obj_t* volume_row = lv_obj_create(player_card);
+    lv_obj_set_size(volume_row, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_style_radius(volume_row, 0, 0);
+    lv_obj_set_style_pad_all(volume_row, 0, 0);
+    lv_obj_set_style_border_width(volume_row, 0, 0);
+    lv_obj_set_style_bg_opa(volume_row, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(volume_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(volume_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t* volume_icon = lv_label_create(volume_row);
+    lv_obj_set_style_text_font(volume_icon, large_icon_font, 0);
+    lv_label_set_text(volume_icon, FONT_AWESOME_VOLUME_HIGH);
+
+    lv_obj_t* volume_bar = lv_bar_create(volume_row);
+    lv_obj_set_flex_grow(volume_bar, 1);
+    lv_bar_set_range(volume_bar, 0, 100);
+    lv_bar_set_value(volume_bar, 70, LV_ANIM_OFF);
+
+    lv_obj_t* volume_value = lv_label_create(volume_row);
+    ConfigureWrapLabel(volume_value, text_font, 32, LV_TEXT_ALIGN_RIGHT);
+    lv_label_set_text(volume_value, "70");
+
+    lv_obj_add_event_cb(play_btn, [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowNotification("Bản dựng giao diện chưa phát nhạc thật");
+    }, LV_EVENT_CLICKED, this);
+
+    ApplyReadableTextColors();
+}
+
+void LvglTouchUi::ShowVideoPlayerPage() {
+    DisplayLockGuard lock(this);
+    ResetPageWidgets();
+    active_page_ = PageType::kPageVideoPlayer;
+    lv_obj_clean(page_container);
+
+    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
+    auto text_font = GetTextFont();
+    auto large_icon_font = GetLargeIconFont();
+
+    lv_obj_t* layout = lv_obj_create(page_container);
+    lv_obj_set_size(layout, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_radius(layout, 0, 0);
+    lv_obj_set_style_pad_all(layout, 6, 0);
+    lv_obj_set_style_border_width(layout, 0, 0);
+    lv_obj_set_style_bg_opa(layout, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(layout, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(layout, 6, 0);
+
+    lv_obj_t* header = lv_obj_create(layout);
+    lv_obj_set_size(header, LV_PCT(100), 34);
+    lv_obj_set_style_radius(header, 0, 0);
+    lv_obj_set_style_pad_all(header, 0, 0);
+    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(header, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t* title = lv_label_create(header);
+    ConfigureWrapLabel(title, text_font, 150, LV_TEXT_ALIGN_LEFT);
+    lv_label_set_text(title, "Phát video");
+
+    lv_obj_t* back_btn = lv_button_create(header);
+    lv_obj_set_size(back_btn, 72, 30);
+    lv_obj_t* back_lbl = lv_label_create(back_btn);
+    ConfigureButtonLabel(back_lbl, text_font);
+    lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
+    lv_obj_center(back_lbl);
+    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowMainGridPage();
+    }, LV_EVENT_CLICKED, this);
+
+    lv_obj_t* preview = lv_obj_create(layout);
+    lv_obj_set_width(preview, LV_PCT(100));
+    lv_obj_set_height(preview, 88);
+    lv_obj_set_style_radius(preview, 8, 0);
+    lv_obj_set_style_pad_all(preview, 6, 0);
+    lv_obj_set_style_border_width(preview, 1, 0);
+    lv_obj_set_flex_flow(preview, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(preview, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    if (theme) {
+        lv_obj_set_style_bg_color(preview, theme->assistant_bubble_color(), 0);
+        lv_obj_set_style_bg_opa(preview, LV_OPA_70, 0);
+        lv_obj_set_style_border_color(preview, theme->border_color(), 0);
+    }
+
+    lv_obj_t* preview_icon = lv_label_create(preview);
+    lv_obj_set_style_text_font(preview_icon, large_icon_font, 0);
+    lv_label_set_text(preview_icon, FONT_AWESOME_IMAGE);
+
+    lv_obj_t* preview_text = lv_label_create(preview);
+    ConfigureWrapLabel(preview_text, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+    lv_label_set_text(preview_text, "video-sample.mp4");
+
+    lv_obj_t* video_meta = lv_label_create(layout);
+    ConfigureWrapLabel(video_meta, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
+    lv_label_set_text(video_meta, "MP4 / H.264 từ thẻ SD");
+
+    lv_obj_t* progress = lv_bar_create(layout);
+    lv_obj_set_width(progress, LV_PCT(100));
+    lv_bar_set_range(progress, 0, 100);
+    lv_bar_set_value(progress, 18, LV_ANIM_OFF);
+
+    lv_obj_t* time_row = lv_obj_create(layout);
+    lv_obj_set_size(time_row, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_style_radius(time_row, 0, 0);
+    lv_obj_set_style_pad_all(time_row, 0, 0);
+    lv_obj_set_style_border_width(time_row, 0, 0);
+    lv_obj_set_style_bg_opa(time_row, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(time_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(time_row, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t* time_left = lv_label_create(time_row);
+    ConfigureWrapLabel(time_left, text_font, 60, LV_TEXT_ALIGN_LEFT);
+    lv_label_set_text(time_left, "00:18");
+
+    lv_obj_t* time_right = lv_label_create(time_row);
+    ConfigureWrapLabel(time_right, text_font, 60, LV_TEXT_ALIGN_RIGHT);
+    lv_label_set_text(time_right, "05:00");
+
+    lv_obj_t* controls = lv_obj_create(layout);
+    lv_obj_set_size(controls, LV_PCT(100), 42);
+    lv_obj_set_style_radius(controls, 0, 0);
+    lv_obj_set_style_pad_all(controls, 0, 0);
+    lv_obj_set_style_border_width(controls, 0, 0);
+    lv_obj_set_style_bg_opa(controls, LV_OPA_TRANSP, 0);
+    lv_obj_set_flex_flow(controls, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(controls, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    auto create_control = [&](const char* icon, int width) {
+        lv_obj_t* btn = lv_button_create(controls);
+        lv_obj_set_size(btn, width, 36);
+        lv_obj_t* lbl = lv_label_create(btn);
+        ConfigureButtonLabel(lbl, text_font);
+        lv_label_set_text(lbl, icon);
+        lv_obj_center(lbl);
+        lv_obj_add_state(btn, LV_STATE_DISABLED);
+        return btn;
+    };
+
+    create_control(FONT_AWESOME_BACKWARD_STEP, 60);
+    create_control(FONT_AWESOME_PLAY, 72);
+    create_control(FONT_AWESOME_FORWARD_STEP, 60);
+
+    ApplyReadableTextColors();
+}
+
 void LvglTouchUi::ShowWifiSetupPage() {
+
     {
         DisplayLockGuard lock(this);
         ResetPageWidgets();
@@ -1359,6 +1757,9 @@ void LvglTouchUi::RebuildActivePage() {
         case PageType::kPageChat: ShowChatPage(); break;
         case PageType::kPageSettings: ShowSettingsPage(); break;
         case PageType::kPageAbout: ShowAboutPage(); break;
+        case PageType::kPageFileManager: ShowFileManagerPage(); break;
+        case PageType::kPageMusicPlayer: ShowMusicPlayerPage(); break;
+        case PageType::kPageVideoPlayer: ShowVideoPlayerPage(); break;
         case PageType::kPageWifiSetup: ShowWifiSetupPage(); break;
         case PageType::kPageWifiConnect: ShowWifiConnectPage(); break;
     }
