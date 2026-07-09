@@ -60,19 +60,12 @@ void ConfigureButtonLabel(lv_obj_t* label, const lv_font_t* font) {
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
 }
 
-void ConfigureTileLabel(lv_obj_t* label, const lv_font_t* font) {
-    lv_obj_set_style_text_font(label, font, 0);
-    lv_obj_set_width(label, LV_PCT(100));
-    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-}
-
-lv_color_t GetTileAccentColor(int col, int row) {
-    static const uint32_t kAccents[2][3] = {
-        {0x38BDF8, 0xA78BFA, 0x22C55E},
-        {0xF59E0B, 0xEC4899, 0x06B6D4},
+lv_color_t GetTileBackgroundColor(int col, int row) {
+    static const uint32_t kBackgrounds[2][3] = {
+        {0x0EA5E9, 0x7C3AED, 0x16A34A},
+        {0xD97706, 0xDB2777, 0x0891B2},
     };
-    return lv_color_hex(kAccents[row][col]);
+    return lv_color_hex(kBackgrounds[row][col]);
 }
 
 void HandleMicActionClicked(lv_event_t* e) {
@@ -304,23 +297,18 @@ void LvglTouchUi::ShowMainGridPage() {
 
     lv_obj_clean(page_container);
 
-    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
     auto text_font = GetTextFont();
-    auto large_icon_font = GetLargeIconFont();
+    auto icon_font = GetIconFont();
 
     lv_obj_t* home_layout = lv_obj_create(page_container);
     lv_obj_set_size(home_layout, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_radius(home_layout, 0, 0);
-    lv_obj_set_style_pad_all(home_layout, 4, 0);
-    lv_obj_set_style_pad_row(home_layout, 6, 0);
-    lv_obj_set_style_pad_column(home_layout, 6, 0);
+    lv_obj_set_style_pad_all(home_layout, 2, 0);
+    lv_obj_set_style_pad_row(home_layout, 0, 0);
+    lv_obj_set_style_pad_column(home_layout, 0, 0);
     lv_obj_set_style_border_width(home_layout, 0, 0);
     lv_obj_set_style_bg_opa(home_layout, LV_OPA_TRANSP, 0);
     lv_obj_set_flex_flow(home_layout, LV_FLEX_FLOW_COLUMN);
-
-    lv_obj_t* home_title = lv_label_create(home_layout);
-    ConfigureWrapLabel(home_title, text_font, LV_PCT(100), LV_TEXT_ALIGN_CENTER);
-    lv_label_set_text(home_title, "Trang chủ");
 
     lv_obj_t* tile_grid = lv_obj_create(home_layout);
     lv_obj_set_width(tile_grid, LV_PCT(100));
@@ -337,37 +325,28 @@ void LvglTouchUi::ShowMainGridPage() {
     lv_obj_set_style_grid_row_dsc_array(tile_grid, row_dsc, 0);
 
     auto create_tile = [&](int col, int row, const char* icon, const char* label, lv_event_cb_t cb) {
-        lv_color_t accent_color = GetTileAccentColor(col, row);
+        lv_color_t tile_color = GetTileBackgroundColor(col, row);
         lv_obj_t* tile = lv_button_create(tile_grid);
         lv_obj_set_grid_cell(tile, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
         lv_obj_set_style_radius(tile, 8, 0);
-        lv_obj_set_style_pad_all(tile, 6, 0);
-        lv_obj_set_style_border_width(tile, 1, 0);
+        lv_obj_set_style_pad_all(tile, 4, 0);
+        lv_obj_set_style_pad_row(tile, 2, 0);
+        lv_obj_set_style_border_width(tile, 0, 0);
         lv_obj_set_flex_flow(tile, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_flex_align(tile, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-        if (theme) {
-            lv_obj_set_style_bg_color(tile, theme->assistant_bubble_color(), 0);
-            lv_obj_set_style_bg_opa(tile, LV_OPA_80, 0);
-            lv_obj_set_style_border_color(tile, accent_color, 0);
-        } else {
-            lv_obj_set_style_bg_color(tile, lv_color_hex(0x2A2A2A), 0);
-            lv_obj_set_style_border_color(tile, accent_color, 0);
-        }
+        lv_obj_set_style_bg_color(tile, tile_color, 0);
+        lv_obj_set_style_bg_opa(tile, LV_OPA_COVER, 0);
         lv_obj_add_event_cb(tile, cb, LV_EVENT_CLICKED, this);
 
         lv_obj_t* icon_label = lv_label_create(tile);
-        lv_obj_set_style_text_font(icon_label, large_icon_font, 0);
+        lv_obj_set_style_text_font(icon_label, icon_font, 0);
         lv_label_set_text(icon_label, icon);
-        lv_obj_set_style_text_color(icon_label, accent_color, 0);
+        lv_obj_set_style_text_color(icon_label, lv_color_hex(0xFFFFFF), 0);
 
         lv_obj_t* txt_label = lv_label_create(tile);
-        ConfigureTileLabel(txt_label, text_font);
+        ConfigureButtonLabel(txt_label, text_font);
         lv_label_set_text(txt_label, label);
-        if (theme) {
-            lv_obj_set_style_text_color(txt_label, theme->text_color(), 0);
-        } else {
-            lv_obj_set_style_text_color(txt_label, lv_color_hex(0xFFFFFF), 0);
-        }
+        lv_obj_set_style_text_color(txt_label, lv_color_hex(0xFFFFFF), 0);
     };
 
     create_tile(0, 0, FONT_AWESOME_MICROCHIP_AI, "AI Agent", [](lv_event_t* e) {
