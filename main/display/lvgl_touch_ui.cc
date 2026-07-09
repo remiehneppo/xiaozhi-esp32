@@ -298,7 +298,7 @@ void LvglTouchUi::ShowMainGridPage() {
     lv_obj_clean(page_container);
 
     auto text_font = GetTextFont();
-    auto icon_font = GetIconFont();
+    auto icon_font = GetLargeIconFont();
 
     lv_obj_t* home_layout = lv_obj_create(page_container);
     lv_obj_set_size(home_layout, LV_PCT(100), LV_PCT(100));
@@ -354,29 +354,30 @@ void LvglTouchUi::ShowMainGridPage() {
         ui->ShowChatPage();
     });
 
-    create_tile(1, 0, FONT_AWESOME_GEAR, "Cài đặt", [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowSettingsPage();
-    });
-
-    create_tile(2, 0, FONT_AWESOME_CIRCLE_INFO, "About", [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowAboutPage();
-    });
-
-    create_tile(0, 1, FONT_AWESOME_SD_CARD, "Quản lý tệp", [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowFileManagerPage();
-    });
-
-    create_tile(1, 1, FONT_AWESOME_MUSIC, "Phát nhạc", [](lv_event_t* e) {
+    create_tile(1, 0, FONT_AWESOME_MUSIC, "Music", [](lv_event_t* e) {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
         ui->ShowMusicPlayerPage();
     });
 
-    create_tile(2, 1, FONT_AWESOME_IMAGE, "Phát video", [](lv_event_t* e) {
+
+    create_tile(2, 0, FONT_AWESOME_PLAY, "Video", [](lv_event_t* e) {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
         ui->ShowVideoPlayerPage();
+    });
+
+    create_tile(0, 1, FONT_AWESOME_SD_CARD, "File", [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowFileManagerPage();
+    });
+
+    create_tile(1, 1, FONT_AWESOME_GEAR, "Cài đặt", [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowSettingsPage();
+    });
+
+    create_tile(2, 1, FONT_AWESOME_CIRCLE_INFO, "About", [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        ui->ShowAboutPage();
     });
 
     ApplyReadableTextColors();
