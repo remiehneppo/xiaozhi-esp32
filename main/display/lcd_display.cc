@@ -29,32 +29,32 @@ void LcdDisplay::InitializeLcdThemes() {
 
     // light theme
     auto light_theme = new LvglTheme("light");
-    light_theme->set_background_color(lv_color_hex(0xFFFFFF));
-    light_theme->set_text_color(lv_color_hex(0x000000));
-    light_theme->set_chat_background_color(lv_color_hex(0xE0E0E0));
-    light_theme->set_user_bubble_color(lv_color_hex(0x00FF00));
-    light_theme->set_assistant_bubble_color(lv_color_hex(0xDDDDDD));
-    light_theme->set_system_bubble_color(lv_color_hex(0xFFFFFF));
-    light_theme->set_system_text_color(lv_color_hex(0x000000));
-    light_theme->set_border_color(lv_color_hex(0x000000));
-    light_theme->set_low_battery_color(lv_color_hex(0x000000));
-    light_theme->set_message_opacity(153);
+    light_theme->set_background_color(lv_color_hex(0xF5F7FB));
+    light_theme->set_text_color(lv_color_hex(0x172033));
+    light_theme->set_chat_background_color(lv_color_hex(0xEAF0F8));
+    light_theme->set_user_bubble_color(lv_color_hex(0x2563EB));
+    light_theme->set_assistant_bubble_color(lv_color_hex(0xFFFFFF));
+    light_theme->set_system_bubble_color(lv_color_hex(0xDCE6F4));
+    light_theme->set_system_text_color(lv_color_hex(0x172033));
+    light_theme->set_border_color(lv_color_hex(0xB8C7DA));
+    light_theme->set_low_battery_color(lv_color_hex(0xDC2626));
+    light_theme->set_message_opacity(220);
     light_theme->set_text_font(text_font);
     light_theme->set_icon_font(icon_font);
     light_theme->set_large_icon_font(large_icon_font);
 
     // dark theme
     auto dark_theme = new LvglTheme("dark");
-    dark_theme->set_background_color(lv_color_hex(0x000000));
-    dark_theme->set_text_color(lv_color_hex(0xFFFFFF));
-    dark_theme->set_chat_background_color(lv_color_hex(0x1F1F1F));
-    dark_theme->set_user_bubble_color(lv_color_hex(0x00FF00));
-    dark_theme->set_assistant_bubble_color(lv_color_hex(0x222222));
-    dark_theme->set_system_bubble_color(lv_color_hex(0x000000));
-    dark_theme->set_system_text_color(lv_color_hex(0xFFFFFF));
-    dark_theme->set_border_color(lv_color_hex(0xFFFFFF));
-    dark_theme->set_low_battery_color(lv_color_hex(0xFF0000));
-    dark_theme->set_message_opacity(204);
+    dark_theme->set_background_color(lv_color_hex(0x0B1220));
+    dark_theme->set_text_color(lv_color_hex(0xF8FAFC));
+    dark_theme->set_chat_background_color(lv_color_hex(0x111827));
+    dark_theme->set_user_bubble_color(lv_color_hex(0x2563EB));
+    dark_theme->set_assistant_bubble_color(lv_color_hex(0x1E293B));
+    dark_theme->set_system_bubble_color(lv_color_hex(0x0F172A));
+    dark_theme->set_system_text_color(lv_color_hex(0xF8FAFC));
+    dark_theme->set_border_color(lv_color_hex(0x334155));
+    dark_theme->set_low_battery_color(lv_color_hex(0xF97316));
+    dark_theme->set_message_opacity(230);
     dark_theme->set_text_font(text_font);
     dark_theme->set_icon_font(icon_font);
     dark_theme->set_large_icon_font(large_icon_font);

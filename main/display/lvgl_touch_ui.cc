@@ -67,6 +67,14 @@ void ConfigureTileLabel(lv_obj_t* label, const lv_font_t* font) {
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
 }
 
+lv_color_t GetTileAccentColor(int col, int row) {
+    static const uint32_t kAccents[2][3] = {
+        {0x38BDF8, 0xA78BFA, 0x22C55E},
+        {0xF59E0B, 0xEC4899, 0x06B6D4},
+    };
+    return lv_color_hex(kAccents[row][col]);
+}
+
 void HandleMicActionClicked(lv_event_t* e) {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
         return;
@@ -329,6 +337,7 @@ void LvglTouchUi::ShowMainGridPage() {
     lv_obj_set_style_grid_row_dsc_array(tile_grid, row_dsc, 0);
 
     auto create_tile = [&](int col, int row, const char* icon, const char* label, lv_event_cb_t cb) {
+        lv_color_t accent_color = GetTileAccentColor(col, row);
         lv_obj_t* tile = lv_button_create(tile_grid);
         lv_obj_set_grid_cell(tile, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
         lv_obj_set_style_radius(tile, 8, 0);
@@ -339,15 +348,17 @@ void LvglTouchUi::ShowMainGridPage() {
         if (theme) {
             lv_obj_set_style_bg_color(tile, theme->assistant_bubble_color(), 0);
             lv_obj_set_style_bg_opa(tile, LV_OPA_80, 0);
-            lv_obj_set_style_border_color(tile, theme->border_color(), 0);
+            lv_obj_set_style_border_color(tile, accent_color, 0);
         } else {
             lv_obj_set_style_bg_color(tile, lv_color_hex(0x2A2A2A), 0);
+            lv_obj_set_style_border_color(tile, accent_color, 0);
         }
         lv_obj_add_event_cb(tile, cb, LV_EVENT_CLICKED, this);
 
         lv_obj_t* icon_label = lv_label_create(tile);
         lv_obj_set_style_text_font(icon_label, large_icon_font, 0);
         lv_label_set_text(icon_label, icon);
+        lv_obj_set_style_text_color(icon_label, accent_color, 0);
 
         lv_obj_t* txt_label = lv_label_create(tile);
         ConfigureTileLabel(txt_label, text_font);
