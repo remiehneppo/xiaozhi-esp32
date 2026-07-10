@@ -12,7 +12,8 @@ TouchUiPageTarget GetTouchUiPageTarget(DeviceState old_state, DeviceState new_st
         return TouchUiPageTarget::kWifiSetup;
     }
     if ((old_state == kDeviceStateWifiConfiguring || old_state == kDeviceStateConnecting || old_state == kDeviceStateStarting) &&
-        (new_state == kDeviceStateIdle || new_state == kDeviceStateListening || new_state == kDeviceStateSpeaking)) {
+        (new_state == kDeviceStateActivating || new_state == kDeviceStateIdle ||
+         new_state == kDeviceStateListening || new_state == kDeviceStateSpeaking)) {
         return TouchUiPageTarget::kMainGrid;
     }
     return TouchUiPageTarget::kNone;

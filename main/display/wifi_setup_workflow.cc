@@ -5,9 +5,12 @@
 
 #include <algorithm>
 #include <cstring>
+#include <esp_log.h>
 #include <esp_wifi.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+
+#define TAG "WifiSetupWorkflow"
 
 namespace {
 std::string ExtractSsid(const wifi_ap_record_t& record) {
@@ -20,10 +23,29 @@ void AppendUniqueSsid(std::vector<std::string>& ssids, const std::string& ssid) 
         ssids.push_back(ssid);
     }
 }
+
+esp_err_t EnsureWifiStartedForScan() {
+    auto mode_ret = esp_wifi_set_mode(WIFI_MODE_STA);
+    if (mode_ret != ESP_OK) {
+        ESP_LOGW(TAG, "esp_wifi_set_mode(STA) before scan: %s", esp_err_to_name(mode_ret));
+    }
+
+    auto start_ret = esp_wifi_start();
+    if (start_ret != ESP_OK) {
+        ESP_LOGW(TAG, "esp_wifi_start before scan: %s", esp_err_to_name(start_ret));
+    }
+
+    return (mode_ret == ESP_OK || start_ret == ESP_OK) ? ESP_OK : start_ret;
+}
 }
 
 esp_err_t WifiSetupWorkflow::ScanSsids(std::vector<std::string>& ssids) {
     ssids.clear();
+
+    auto wifi_ret = EnsureWifiStartedForScan();
+    if (wifi_ret != ESP_OK) {
+        return wifi_ret;
+    }
 
     wifi_scan_config_t scan_config = {};
     scan_config.show_hidden = false;
@@ -86,5 +108,11 @@ void WifiSetupWorkflow::SaveCredentialsAndReconnect(const char* ssid, const char
         return;
     }
 
+    esp_wifi_scan_stop();
+    auto stop_ret = esp_wifi_stop();
+    if (stop_ret != ESP_OK) {
+        ESP_LOGW(TAG, "esp_wifi_stop before station reconnect: %s", esp_err_to_name(stop_ret));
+    }
+    vTaskDelay(pdMS_TO_TICKS(150));
     wifi_manager.StartStation();
 }

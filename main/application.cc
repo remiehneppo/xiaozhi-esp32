@@ -266,7 +266,11 @@ void Application::HandleNetworkConnectedEvent() {
     ESP_LOGI(TAG, "Network connected");
     auto state = GetDeviceState();
 
-    if (state == kDeviceStateStarting || state == kDeviceStateWifiConfiguring) {
+    if (state == kDeviceStateStarting || state == kDeviceStateWifiConfiguring || state == kDeviceStateAudioTesting) {
+        if (state == kDeviceStateAudioTesting) {
+            audio_service_.EnableAudioTesting(false);
+        }
+
         // Network is ready, start activation
         SetDeviceState(kDeviceStateActivating);
         if (activation_task_handle_ != nullptr) {

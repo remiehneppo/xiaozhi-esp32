@@ -33,6 +33,7 @@ private:
     lv_obj_t* page_container = nullptr;
 
     // Status bar widgets
+    lv_obj_t* status_back_btn_ = nullptr;
     lv_obj_t* wifi_icon = nullptr;
     lv_obj_t* battery_icon = nullptr;
     lv_obj_t* time_label = nullptr;
@@ -59,8 +60,10 @@ private:
     const lv_font_t* GetIconFont() const;
     const lv_font_t* GetLargeIconFont() const;
     void ApplyStatusBarTheme();
+    void UpdateStatusBarNavigation();
 
     // WiFi setup widgets
+    lv_obj_t* wifi_select_label_ = nullptr;
     lv_obj_t* wifi_roller = nullptr;
     lv_obj_t* password_textarea = nullptr;
     lv_obj_t* keyboard = nullptr;

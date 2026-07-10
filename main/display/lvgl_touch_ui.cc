@@ -210,29 +210,51 @@ void LvglTouchUi::CreateStatusBar() {
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
 
     top_bar = lv_obj_create(master_container);
-    lv_obj_set_size(top_bar, LV_PCT(100), 24);
+    lv_obj_set_size(top_bar, LV_PCT(100), 30);
     lv_obj_set_style_radius(top_bar, 0, 0);
     lv_obj_set_style_pad_top(top_bar, 2, 0);
     lv_obj_set_style_pad_bottom(top_bar, 2, 0);
-    lv_obj_set_style_pad_left(top_bar, 8, 0);
-    lv_obj_set_style_pad_right(top_bar, 8, 0);
-    lv_obj_set_style_border_width(top_bar, 0, 0);
+    lv_obj_set_style_pad_left(top_bar, 4, 0);
+    lv_obj_set_style_pad_right(top_bar, 6, 0);
+    lv_obj_set_style_border_side(top_bar, LV_BORDER_SIDE_BOTTOM, 0);
+    lv_obj_set_style_border_width(top_bar, 1, 0);
 
     if (theme) {
-        lv_obj_set_style_bg_color(top_bar, theme->background_color(), 0);
-        lv_obj_set_style_bg_opa(top_bar, LV_OPA_80, 0);
+        lv_obj_set_style_bg_color(top_bar, theme->assistant_bubble_color(), 0);
+        lv_obj_set_style_bg_opa(top_bar, LV_OPA_COVER, 0);
         lv_obj_set_style_text_color(top_bar, theme->text_color(), 0);
+        lv_obj_set_style_border_color(top_bar, theme->border_color(), 0);
     } else {
-        lv_obj_set_style_bg_color(top_bar, lv_color_hex(0x2D2D2D), 0);
+        lv_obj_set_style_bg_color(top_bar, lv_color_hex(0x111827), 0);
         lv_obj_set_style_text_color(top_bar, lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_style_border_color(top_bar, lv_color_hex(0x374151), 0);
     }
 
     lv_obj_set_flex_flow(top_bar, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(top_bar, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_column(top_bar, 4, 0);
+    lv_obj_set_flex_align(top_bar, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    status_back_btn_ = lv_button_create(top_bar);
+    lv_obj_set_size(status_back_btn_, 44, 26);
+    lv_obj_set_style_radius(status_back_btn_, 8, 0);
+    lv_obj_set_style_bg_opa(status_back_btn_, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(status_back_btn_, 0, 0);
+    lv_obj_set_style_shadow_width(status_back_btn_, 0, 0);
+    lv_obj_t* back_icon = lv_label_create(status_back_btn_);
+    lv_obj_set_style_text_font(back_icon, GetIconFont(), 0);
+    lv_label_set_text(back_icon, FONT_AWESOME_ARROW_LEFT);
+    lv_obj_center(back_icon);
+    lv_obj_add_event_cb(status_back_btn_, [](lv_event_t* e) {
+        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
+        if (ui->keyboard) {
+            lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
+        }
+        ui->ShowMainGridPage();
+    }, LV_EVENT_CLICKED, this);
 
     // Left: WiFi Strength
     wifi_icon = lv_label_create(top_bar);
-    lv_obj_set_width(wifi_icon, 28);
+    lv_obj_set_width(wifi_icon, 22);
     lv_obj_set_style_text_align(wifi_icon, LV_TEXT_ALIGN_LEFT, 0);
     lv_label_set_text(wifi_icon, FONT_AWESOME_WIFI_SLASH);
 
@@ -245,12 +267,13 @@ void LvglTouchUi::CreateStatusBar() {
 
     // Right: Battery
     battery_icon = lv_label_create(top_bar);
-    lv_obj_set_width(battery_icon, 82);
+    lv_obj_set_width(battery_icon, 74);
     lv_label_set_long_mode(battery_icon, LV_LABEL_LONG_DOT);
     lv_obj_set_style_text_align(battery_icon, LV_TEXT_ALIGN_RIGHT, 0);
     lv_label_set_text(battery_icon, FONT_AWESOME_BATTERY_HALF " --%");
 
     ApplyStatusBarTheme();
+    UpdateStatusBarNavigation();
 }
 
 void LvglTouchUi::UpdateStatusBar(bool update_all) {
@@ -323,6 +346,7 @@ void LvglTouchUi::ShowMainGridPage() {
     DisplayLockGuard lock(this);
     ResetPageWidgets();
     active_page_ = PageType::kPageMainGrid;
+    UpdateStatusBarNavigation();
 
     lv_obj_clean(page_container);
 
@@ -416,6 +440,7 @@ void LvglTouchUi::ShowChatPage() {
     DisplayLockGuard lock(this);
     ResetPageWidgets();
     active_page_ = PageType::kPageChat;
+    UpdateStatusBarNavigation();
 
     lv_obj_clean(page_container);
 
@@ -447,7 +472,7 @@ void LvglTouchUi::ShowChatPage() {
     lv_obj_set_scroll_dir(chat_box, LV_DIR_VER);
     lv_obj_set_scrollbar_mode(chat_box, LV_SCROLLBAR_MODE_AUTO);
 
-    // 2. Bottom Mic State & Navigation Panel
+    // 2. Bottom Mic State Panel
     lv_obj_t* bottom_panel = lv_obj_create(chat_layout);
     lv_obj_set_size(bottom_panel, LV_PCT(100), 38);
     lv_obj_set_style_radius(bottom_panel, 0, 0);
@@ -458,19 +483,6 @@ void LvglTouchUi::ShowChatPage() {
     lv_obj_set_flex_flow(bottom_panel, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(bottom_panel, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
-    // Back Button (left)
-    lv_obj_t* back_btn = lv_button_create(bottom_panel);
-    lv_obj_set_size(back_btn, 96, 30);
-    StyleAccentButton(back_btn, GetPageAccentColor(1));
-    lv_obj_t* back_label = lv_label_create(back_btn);
-    ConfigureButtonLabel(back_label, text_font);
-    lv_label_set_text(back_label, FONT_AWESOME_ARROW_LEFT " Trở về");
-    lv_obj_center(back_label);
-    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowMainGridPage();
-    }, LV_EVENT_CLICKED, this);
-
     // Mic Status Container (center/right)
     lv_obj_t* status_container = lv_obj_create(bottom_panel);
     lv_obj_set_height(status_container, 30);
@@ -480,7 +492,7 @@ void LvglTouchUi::ShowChatPage() {
     lv_obj_set_style_border_width(status_container, 0, 0);
     lv_obj_set_style_bg_opa(status_container, LV_OPA_TRANSP, 0);
     lv_obj_set_flex_flow(status_container, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(status_container, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_flex_align(status_container, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_add_flag(status_container, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(status_container, HandleMicActionClicked, LV_EVENT_CLICKED, this);
 
@@ -660,6 +672,7 @@ void LvglTouchUi::ShowSettingsPage() {
     ResetPageWidgets();
 
     active_page_ = PageType::kPageSettings;
+    UpdateStatusBarNavigation();
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
@@ -822,7 +835,8 @@ void LvglTouchUi::ShowSettingsPage() {
         lv_obj_set_style_border_width(btn_row, 0, 0);
         lv_obj_set_style_bg_opa(btn_row, LV_OPA_TRANSP, 0);
         lv_obj_set_flex_flow(btn_row, LV_FLEX_FLOW_ROW);
-        lv_obj_set_flex_align(btn_row, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_column(btn_row, 8, 0);
+        lv_obj_set_flex_align(btn_row, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
         // Cancel button
         lv_obj_t* cancel = lv_button_create(btn_row);
@@ -886,27 +900,6 @@ void LvglTouchUi::ShowSettingsPage() {
         ui->ShowWifiSetupPage();
     }, LV_EVENT_CLICKED, this);
 
-    // Back Button at the bottom
-    lv_obj_t* back_row = lv_obj_create(settings_layout);
-    lv_obj_set_size(back_row, LV_PCT(100), 35);
-    lv_obj_set_style_pad_all(back_row, 0, 0);
-    lv_obj_set_style_border_width(back_row, 0, 0);
-    lv_obj_set_style_bg_opa(back_row, LV_OPA_TRANSP, 0);
-    lv_obj_set_flex_flow(back_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(back_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-    lv_obj_t* back_btn = lv_button_create(back_row);
-    lv_obj_set_size(back_btn, 112, 30);
-    StyleAccentButton(back_btn, GetPageAccentColor(5));
-    lv_obj_t* back_lbl = lv_label_create(back_btn);
-    ConfigureButtonLabel(back_lbl, text_font);
-    lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
-    lv_obj_center(back_lbl);
-    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowMainGridPage();
-    }, LV_EVENT_CLICKED, this);
-
     ApplyReadableTextColors();
 }
 
@@ -916,6 +909,7 @@ void LvglTouchUi::ShowAboutPage() {
     ResetPageWidgets();
 
     active_page_ = PageType::kPageAbout;
+    UpdateStatusBarNavigation();
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
@@ -990,26 +984,6 @@ void LvglTouchUi::ShowAboutPage() {
         create_about_row("Lưu trữ:", storage_status);
     }
 
-    lv_obj_t* back_row = lv_obj_create(about_layout);
-    lv_obj_set_size(back_row, LV_PCT(100), 35);
-    lv_obj_set_style_pad_all(back_row, 0, 0);
-    lv_obj_set_style_border_width(back_row, 0, 0);
-    lv_obj_set_style_bg_opa(back_row, LV_OPA_TRANSP, 0);
-    lv_obj_set_flex_flow(back_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(back_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-    lv_obj_t* back_btn = lv_button_create(back_row);
-    lv_obj_set_size(back_btn, 112, 30);
-    StyleAccentButton(back_btn, GetPageAccentColor(2));
-    lv_obj_t* back_lbl = lv_label_create(back_btn);
-    ConfigureButtonLabel(back_lbl, text_font);
-    lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
-    lv_obj_center(back_lbl);
-    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowMainGridPage();
-    }, LV_EVENT_CLICKED, this);
-
     ApplyReadableTextColors();
 }
 
@@ -1017,6 +991,7 @@ void LvglTouchUi::ShowFileManagerPage() {
     DisplayLockGuard lock(this);
     ResetPageWidgets();
     active_page_ = PageType::kPageFileManager;
+    UpdateStatusBarNavigation();
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
@@ -1045,21 +1020,9 @@ void LvglTouchUi::ShowFileManagerPage() {
     lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     lv_obj_t* title = lv_label_create(header);
-    ConfigureWrapLabel(title, text_font, 150, LV_TEXT_ALIGN_LEFT);
+    ConfigureWrapLabel(title, text_font, LV_PCT(100), LV_TEXT_ALIGN_LEFT);
     lv_label_set_text(title, "Quản lý tệp");
     StyleWhiteLabel(title);
-
-    lv_obj_t* back_btn = lv_button_create(header);
-    lv_obj_set_size(back_btn, 72, 30);
-    StyleAccentButton(back_btn, GetPageAccentColor(5));
-    lv_obj_t* back_lbl = lv_label_create(back_btn);
-    ConfigureButtonLabel(back_lbl, text_font);
-    lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
-    lv_obj_center(back_lbl);
-    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowMainGridPage();
-    }, LV_EVENT_CLICKED, this);
 
     lv_obj_t* status_card = lv_obj_create(layout);
     lv_obj_set_size(status_card, LV_PCT(100), 44);
@@ -1132,6 +1095,7 @@ void LvglTouchUi::ShowMusicPlayerPage() {
     DisplayLockGuard lock(this);
     ResetPageWidgets();
     active_page_ = PageType::kPageMusicPlayer;
+    UpdateStatusBarNavigation();
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
@@ -1160,21 +1124,9 @@ void LvglTouchUi::ShowMusicPlayerPage() {
     lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     lv_obj_t* title = lv_label_create(header);
-    ConfigureWrapLabel(title, text_font, 150, LV_TEXT_ALIGN_LEFT);
+    ConfigureWrapLabel(title, text_font, LV_PCT(100), LV_TEXT_ALIGN_LEFT);
     lv_label_set_text(title, "Phát nhạc");
     StyleWhiteLabel(title);
-
-    lv_obj_t* back_btn = lv_button_create(header);
-    lv_obj_set_size(back_btn, 72, 30);
-    StyleAccentButton(back_btn, GetPageAccentColor(5));
-    lv_obj_t* back_lbl = lv_label_create(back_btn);
-    ConfigureButtonLabel(back_lbl, text_font);
-    lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
-    lv_obj_center(back_lbl);
-    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowMainGridPage();
-    }, LV_EVENT_CLICKED, this);
 
     lv_obj_t* player_card = lv_obj_create(layout);
     lv_obj_set_width(player_card, LV_PCT(100));
@@ -1289,6 +1241,7 @@ void LvglTouchUi::ShowVideoPlayerPage() {
     DisplayLockGuard lock(this);
     ResetPageWidgets();
     active_page_ = PageType::kPageVideoPlayer;
+    UpdateStatusBarNavigation();
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
@@ -1317,21 +1270,9 @@ void LvglTouchUi::ShowVideoPlayerPage() {
     lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     lv_obj_t* title = lv_label_create(header);
-    ConfigureWrapLabel(title, text_font, 150, LV_TEXT_ALIGN_LEFT);
+    ConfigureWrapLabel(title, text_font, LV_PCT(100), LV_TEXT_ALIGN_LEFT);
     lv_label_set_text(title, "Phát video");
     StyleWhiteLabel(title);
-
-    lv_obj_t* back_btn = lv_button_create(header);
-    lv_obj_set_size(back_btn, 72, 30);
-    StyleAccentButton(back_btn, GetPageAccentColor(3));
-    lv_obj_t* back_lbl = lv_label_create(back_btn);
-    ConfigureButtonLabel(back_lbl, text_font);
-    lv_label_set_text(back_lbl, FONT_AWESOME_ARROW_LEFT " Trở về");
-    lv_obj_center(back_lbl);
-    lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
-        auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-        ui->ShowMainGridPage();
-    }, LV_EVENT_CLICKED, this);
 
     lv_obj_t* preview = lv_obj_create(layout);
     lv_obj_set_width(preview, LV_PCT(100));
@@ -1412,6 +1353,7 @@ void LvglTouchUi::ShowWifiSetupPage() {
         ResetPageWidgets();
 
         active_page_ = PageType::kPageWifiSetup;
+        UpdateStatusBarNavigation();
         wifi_scan_has_results_ = false;
         selected_wifi_ssid_.clear();
 
@@ -1432,9 +1374,9 @@ void LvglTouchUi::ShowWifiSetupPage() {
         lv_obj_set_scroll_dir(setup_layout, LV_DIR_VER);
         lv_obj_set_scrollbar_mode(setup_layout, LV_SCROLLBAR_MODE_AUTO);
 
-        lv_obj_t* select_label = lv_label_create(setup_layout);
-        ConfigureWrapLabel(select_label, text_font, LV_PCT(92), LV_TEXT_ALIGN_CENTER);
-        lv_label_set_text(select_label, "Chọn WiFi");
+        wifi_select_label_ = lv_label_create(setup_layout);
+        ConfigureWrapLabel(wifi_select_label_, text_font, LV_PCT(92), LV_TEXT_ALIGN_CENTER);
+        lv_label_set_text(wifi_select_label_, "Chọn WiFi");
 
         wifi_roller = lv_roller_create(setup_layout);
         lv_obj_set_width(wifi_roller, LV_PCT(92));
@@ -1463,22 +1405,8 @@ void LvglTouchUi::ShowWifiSetupPage() {
         lv_obj_set_style_border_width(btn_row, 0, 0);
         lv_obj_set_style_bg_opa(btn_row, LV_OPA_TRANSP, 0);
         lv_obj_set_flex_flow(btn_row, LV_FLEX_FLOW_ROW);
-        lv_obj_set_flex_align(btn_row, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-        lv_obj_t* back_btn = lv_button_create(btn_row);
-        lv_obj_set_size(back_btn, 72, 32);
-        StyleAccentButton(back_btn, GetPageAccentColor(5));
-        lv_obj_t* back_label = lv_label_create(back_btn);
-        ConfigureButtonLabel(back_label, text_font);
-        lv_label_set_text(back_label, "Hủy");
-        lv_obj_center(back_label);
-        lv_obj_add_event_cb(back_btn, [](lv_event_t* e) {
-            auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
-            if (ui->keyboard) {
-                lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
-            }
-            ui->ShowMainGridPage();
-        }, LV_EVENT_CLICKED, this);
+        lv_obj_set_style_pad_column(btn_row, 8, 0);
+        lv_obj_set_flex_align(btn_row, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
         wifi_select_btn_ = lv_button_create(btn_row);
         lv_obj_set_size(wifi_select_btn_, 72, 32);
@@ -1527,7 +1455,10 @@ void LvglTouchUi::ShowWifiSetupPage() {
             ui->wifi_setup_workflow_.SaveCredentialsAndReconnect(ssid.c_str(), password.c_str());
         }, LV_EVENT_CLICKED, this);
 
-        keyboard = lv_keyboard_create(lv_screen_active());
+        keyboard = lv_keyboard_create(setup_layout);
+        lv_obj_set_size(keyboard, LV_PCT(100), 98);
+        lv_obj_set_style_radius(keyboard, 8, 0);
+        lv_obj_set_style_text_font(keyboard, text_font, 0);
         lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
 
         lv_obj_add_event_cb(password_textarea, [](lv_event_t* e) {
@@ -1536,9 +1467,6 @@ void LvglTouchUi::ShowWifiSetupPage() {
             if (code == LV_EVENT_FOCUSED) {
                 lv_keyboard_set_textarea(ui->keyboard, ui->password_textarea);
                 lv_obj_remove_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_scroll_to_view(ui->password_textarea, LV_ANIM_ON);
-            } else if (code == LV_EVENT_DEFOCUSED) {
-                lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
             }
         }, LV_EVENT_ALL, this);
 
@@ -1562,6 +1490,7 @@ void LvglTouchUi::ShowWifiConnectPage() {
     ResetPageWidgets();
 
     active_page_ = PageType::kPageWifiConnect;
+    UpdateStatusBarNavigation();
     lv_obj_clean(page_container);
 
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
@@ -1711,14 +1640,52 @@ const lv_font_t* LvglTouchUi::GetLargeIconFont() const {
 }
 
 void LvglTouchUi::ApplyStatusBarTheme() {
+    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
+    lv_color_t text_color = theme ? theme->text_color() : lv_color_hex(0xFFFFFF);
+    lv_color_t bar_color = theme ? theme->assistant_bubble_color() : lv_color_hex(0x111827);
+    lv_color_t border_color = theme ? theme->border_color() : lv_color_hex(0x374151);
+
+    if (top_bar != nullptr) {
+        lv_obj_set_style_bg_color(top_bar, bar_color, 0);
+        lv_obj_set_style_bg_opa(top_bar, LV_OPA_COVER, 0);
+        lv_obj_set_style_text_color(top_bar, text_color, 0);
+        lv_obj_set_style_border_color(top_bar, border_color, 0);
+        lv_obj_set_style_border_width(top_bar, 1, 0);
+        lv_obj_set_style_border_side(top_bar, LV_BORDER_SIDE_BOTTOM, 0);
+    }
+    if (status_back_btn_ != nullptr) {
+        lv_obj_set_style_text_color(status_back_btn_, text_color, 0);
+        lv_obj_set_style_bg_color(status_back_btn_, border_color, LV_STATE_PRESSED);
+        lv_obj_set_style_bg_opa(status_back_btn_, LV_OPA_50, LV_STATE_PRESSED);
+        lv_obj_t* label = lv_obj_get_child(status_back_btn_, 0);
+        if (label != nullptr) {
+            lv_obj_set_style_text_font(label, GetIconFont(), 0);
+            lv_obj_set_style_text_color(label, text_color, 0);
+        }
+    }
     if (wifi_icon != nullptr) {
         lv_obj_set_style_text_font(wifi_icon, GetIconFont(), 0);
+        lv_obj_set_style_text_color(wifi_icon, text_color, 0);
     }
     if (time_label != nullptr) {
         lv_obj_set_style_text_font(time_label, GetTextFont(), 0);
+        lv_obj_set_style_text_color(time_label, text_color, 0);
     }
     if (battery_icon != nullptr) {
         lv_obj_set_style_text_font(battery_icon, GetIconFont(), 0);
+        lv_obj_set_style_text_color(battery_icon, text_color, 0);
+    }
+}
+
+void LvglTouchUi::UpdateStatusBarNavigation() {
+    if (status_back_btn_ == nullptr) {
+        return;
+    }
+
+    if (active_page_ == PageType::kPageMainGrid) {
+        lv_obj_add_flag(status_back_btn_, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_remove_flag(status_back_btn_, LV_OBJ_FLAG_HIDDEN);
     }
 }
 
@@ -1765,6 +1732,7 @@ void LvglTouchUi::ResetPageWidgets() {
         keyboard = nullptr;
     }
 
+    wifi_select_label_ = nullptr;
     wifi_roller = nullptr;
     password_textarea = nullptr;
     wifi_password_label_ = nullptr;
@@ -1816,7 +1784,8 @@ void LvglTouchUi::HandleDeviceStateChange(DeviceState old_state, DeviceState new
     wifi_connect_attempts_ = GetNextWifiConnectAttempts(wifi_connect_attempts_, new_state);
 
     TouchUiPageTarget page_target = GetTouchUiPageTarget(old_state, new_state);
-    if (active_page_ == PageType::kPageChat && page_target == TouchUiPageTarget::kMainGrid) {
+    if (active_page_ == PageType::kPageChat &&
+        (page_target == TouchUiPageTarget::kMainGrid || page_target == TouchUiPageTarget::kWifiConnect)) {
         page_target = TouchUiPageTarget::kNone;
     }
 
@@ -1909,18 +1878,33 @@ void LvglTouchUi::ShowWifiPasswordStep(const char* ssid) {
         return;
     }
 
+    if (wifi_select_label_ != nullptr) {
+        lv_obj_add_flag(wifi_select_label_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (wifi_roller != nullptr) {
+        lv_obj_add_flag(wifi_roller, LV_OBJ_FLAG_HIDDEN);
+    }
     if (wifi_select_btn_ != nullptr) {
         lv_obj_add_flag(wifi_select_btn_, LV_OBJ_FLAG_HIDDEN);
     }
     if (wifi_password_label_ != nullptr) {
+        std::string label = "Mật khẩu cho ";
+        label += selected_wifi_ssid_;
+        lv_label_set_text(wifi_password_label_, label.c_str());
         lv_obj_remove_flag(wifi_password_label_, LV_OBJ_FLAG_HIDDEN);
     }
     if (password_textarea != nullptr) {
         lv_obj_remove_flag(password_textarea, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_scroll_to_view(password_textarea, LV_ANIM_ON);
+        lv_obj_set_height(password_textarea, 38);
+        lv_obj_scroll_to_view(password_textarea, LV_ANIM_OFF);
+        lv_obj_add_state(password_textarea, LV_STATE_FOCUSED);
     }
     if (wifi_connect_btn_ != nullptr) {
         lv_obj_remove_flag(wifi_connect_btn_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (keyboard != nullptr) {
+        lv_keyboard_set_textarea(keyboard, password_textarea);
+        lv_obj_remove_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
     }
 }
 

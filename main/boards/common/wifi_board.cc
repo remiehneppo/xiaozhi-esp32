@@ -1,6 +1,7 @@
 #include "wifi_board.h"
 
 #include "display.h"
+#include "touch_ui.h"
 #include "application.h"
 #include "system_info.h"
 #include "settings.h"
@@ -161,19 +162,24 @@ void WifiBoard::StartWifiConfigMode() {
     // Transition to wifi configuring state
     Application::GetInstance().SetDeviceState(kDeviceStateWifiConfiguring);
 #ifdef CONFIG_USE_HOTSPOT_WIFI_PROVISIONING
-    auto& wifi_manager = WifiManager::GetInstance();
+    auto* touch_ui = dynamic_cast<TouchUi*>(GetDisplay());
+    if (touch_ui == nullptr) {
+        auto& wifi_manager = WifiManager::GetInstance();
 
-    wifi_manager.StartConfigAp();
+        wifi_manager.StartConfigAp();
 
-    // Show config prompt after a short delay
-    Application::GetInstance().Schedule([&wifi_manager]() {
-        std::string hint = Lang::Strings::CONNECT_TO_HOTSPOT;
-        hint += wifi_manager.GetApSsid();
-        hint += Lang::Strings::ACCESS_VIA_BROWSER;
-        hint += wifi_manager.GetApWebUrl();
+        // Show config prompt after a short delay
+        Application::GetInstance().Schedule([&wifi_manager]() {
+            std::string hint = Lang::Strings::CONNECT_TO_HOTSPOT;
+            hint += wifi_manager.GetApSsid();
+            hint += Lang::Strings::ACCESS_VIA_BROWSER;
+            hint += wifi_manager.GetApWebUrl();
 
-        Application::GetInstance().Alert(Lang::Strings::WIFI_CONFIG_MODE, hint.c_str(), "gear", Lang::Sounds::OGG_WIFICONFIG);
-    });
+            Application::GetInstance().Alert(Lang::Strings::WIFI_CONFIG_MODE, hint.c_str(), "gear", Lang::Sounds::OGG_WIFICONFIG);
+        });
+    } else {
+        ESP_LOGI(TAG, "Using native touch WiFi setup; hotspot captive portal not started");
+    }
 #elif CONFIG_USE_ESP_BLUFI_WIFI_PROVISIONING
     auto &blufi = Blufi::GetInstance();
     // initialize esp-blufi protocol
