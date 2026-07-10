@@ -6,19 +6,14 @@
 #include "application.h"
 #include "button.h"
 #include "config.h"
-#include "assets.h"
-#include "display/lvgl_display/lvgl_image.h"
-#include "display/lvgl_display/lvgl_theme.h"
 
 #include <esp_log.h>
 #include <esp_lcd_panel_vendor.h>
-#include <esp_heap_caps.h>
 #include <driver/i2c_master.h>
 #include <driver/spi_common.h>
 #include <esp_lcd_touch_ft5x06.h>
 #include <esp_lvgl_port.h>
 #include <lvgl.h>
-#include <cstring>
 
 #define TAG "Esps3BaoDevBoard"
 
@@ -48,144 +43,11 @@ static const ili9341_lcd_init_cmd_t vendor_specific_init[] = {
     {0, (uint8_t []){0}, 0x29, 0},
 };
 
-class Esps3BaoDevDisplay : public SpiLcdDisplay {
-public:
-    Esps3BaoDevDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,
-                       int width, int height, int offset_x, int offset_y,
-                       bool mirror_x, bool mirror_y, bool swap_xy)
-        : SpiLcdDisplay(panel_io, panel, width, height, offset_x, offset_y, mirror_x, mirror_y, swap_xy) {}
-
-    void SetupUI() override {
-        SpiLcdDisplay::SetupUI();
-
-        // Load theme-specific background images from assets
-        auto* theme = dynamic_cast<LvglTheme*>(GetTheme());
-        if (theme == nullptr) {
-            ESP_LOGW(TAG, "Theme is not LVGL-based, background images will not be applied");
-            return;
-        }
-        if (!background_images_loaded_) {
-            bool light_loaded = false;
-            bool dark_loaded = false;
-            // Load light theme background
-            void* light_data = nullptr;
-            size_t light_size = 0;
-            if (Assets::GetInstance().GetAssetData("esps3_bao_dev_bg_light.bin", light_data, light_size)) {
-                if (light_size >= 12) {
-                    auto* header = static_cast<uint8_t*>(light_data);
-                    int color_format = header[1] & 0x1f;
-                    int width = header[4] | (header[5] << 8);
-                    int height = header[6] | (header[7] << 8);
-                    int stride = header[8] | (header[9] << 8);
-                    size_t payload_size = light_size - 12;
-                    void* copied_data = heap_caps_malloc(payload_size, MALLOC_CAP_DEFAULT);
-                    if (copied_data != nullptr) {
-                        std::memcpy(copied_data, header + 12, payload_size);
-                        light_bg_image_ = std::make_shared<LvglAllocatedImage>(
-                            copied_data, payload_size, width, height, stride, color_format);
-                        ESP_LOGI(TAG, "Loaded light theme background esps3_bao_dev_bg_light.bin (%dx%d)", width, height);
-                        light_loaded = true;
-                    } else {
-                        ESP_LOGE(TAG, "Failed to allocate memory for light theme background");
-                    }
-                } else {
-                    ESP_LOGE(TAG, "esps3_bao_dev_bg_light.bin is too small to contain an LVGL header");
-                }
-            } else {
-                ESP_LOGI(TAG, "Light theme background esps3_bao_dev_bg_light.bin not found");
-            }
-
-            // Load dark theme background
-            void* dark_data = nullptr;
-            size_t dark_size = 0;
-            if (Assets::GetInstance().GetAssetData("esps3_bao_dev_bg_dark.bin", dark_data, dark_size)) {
-                if (dark_size >= 12) {
-                    auto* header = static_cast<uint8_t*>(dark_data);
-                    int color_format = header[1] & 0x1f;
-                    int width = header[4] | (header[5] << 8);
-                    int height = header[6] | (header[7] << 8);
-                    int stride = header[8] | (header[9] << 8);
-                    size_t payload_size = dark_size - 12;
-                    void* copied_data = heap_caps_malloc(payload_size, MALLOC_CAP_DEFAULT);
-                    if (copied_data != nullptr) {
-                        std::memcpy(copied_data, header + 12, payload_size);
-                        dark_bg_image_ = std::make_shared<LvglAllocatedImage>(
-                            copied_data, payload_size, width, height, stride, color_format);
-                        ESP_LOGI(TAG, "Loaded dark theme background esps3_bao_dev_bg_dark.bin (%dx%d)", width, height);
-                        dark_loaded = true;
-                    } else {
-                        ESP_LOGE(TAG, "Failed to allocate memory for dark theme background");
-                    }
-                } else {
-                    ESP_LOGE(TAG, "esps3_bao_dev_bg_dark.bin is too small to contain an LVGL header");
-                }
-            } else {
-                ESP_LOGI(TAG, "Dark theme background esps3_bao_dev_bg_dark.bin not found");
-            }
-
-            // Set the correct image on the theme BEFORE calling SetTheme()
-            // so the parent SetTheme() picks it up immediately
-            std::string theme_name = theme->name();
-            if (theme_name == "light" && light_bg_image_ != nullptr) {
-                theme->set_background_image(light_bg_image_);
-            } else if (theme_name == "dark" && dark_bg_image_ != nullptr) {
-                theme->set_background_image(dark_bg_image_);
-            }
-            ESP_LOGI(TAG, "Background image load status: light=%s dark=%s active_theme=%s",
-                     light_loaded ? "loaded" : "missing",
-                     dark_loaded ? "loaded" : "missing",
-                     theme_name.c_str());
-
-            // Apply immediately so background image appears on first boot
-            SetTheme(theme);
-            background_images_loaded_ = true;
-        }
-    }
-
-    // Apply the correct background image when theme changes at runtime
-    void SetTheme(Theme* theme) override {
-        if (!IsSetupUICalled()) {
-            Display::SetTheme(theme);
-            ESP_LOGD(TAG, "Theme recorded before LCD UI setup; touch UI owns active LVGL objects");
-            return;
-        }
-
-        auto* lvgl_theme = dynamic_cast<LvglTheme*>(theme);
-        if (lvgl_theme == nullptr) {
-            LcdDisplay::SetTheme(theme);
-            return;
-        }
-
-        // Set the correct background image on the theme BEFORE calling parent.
-        // LcdDisplay::SetTheme() reads lvgl_theme->background_image() to update LVGL,
-        // so the image must be set first.
-        std::string theme_name = lvgl_theme->name();
-        if (theme_name == "light" && light_bg_image_ != nullptr) {
-            lvgl_theme->set_background_image(light_bg_image_);
-            ESP_LOGI(TAG, "Applying light background image to theme");
-        } else if (theme_name == "dark" && dark_bg_image_ != nullptr) {
-            lvgl_theme->set_background_image(dark_bg_image_);
-            ESP_LOGI(TAG, "Applying dark background image to theme");
-        } else {
-            ESP_LOGW(TAG, "No background image available for theme %s", theme_name.c_str());
-        }
-
-        LcdDisplay::SetTheme(theme);
-    }
-
-private:
-    std::shared_ptr<LvglImage> light_bg_image_ = nullptr;
-    std::shared_ptr<LvglImage> dark_bg_image_ = nullptr;
-    bool background_images_loaded_ = false;
-};
-
 class Esps3BaoDevBoard : public WifiBoard {
 private:
-    static constexpr uint8_t kDoubleTapClickCount = 2;
-
     i2c_master_bus_handle_t codec_i2c_bus_;
     Button boot_button_;
-    Esps3BaoDevDisplay* display_ = nullptr;
+    SpiLcdDisplay* display_ = nullptr;
     lv_indev_t* touch_indev_ = nullptr;
     LvglTouchUi* touch_ui_ = nullptr;
 
@@ -276,31 +138,9 @@ private:
         esp_lcd_panel_mirror(panel, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y);
         esp_lcd_panel_disp_on_off(panel, true);
 
-        display_ = new Esps3BaoDevDisplay(panel_io, panel,
+        display_ = new SpiLcdDisplay(panel_io, panel,
             DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y,
             DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
-    }
-
-    static void TouchEventCallback(lv_event_t* event) {
-        auto* board = static_cast<Esps3BaoDevBoard*>(lv_event_get_user_data(event));
-        if (board == nullptr) {
-            return;
-        }
-        board->HandleTouchEvent(event);
-    }
-
-    void HandleTouchEvent(lv_event_t* event) {
-        if (lv_event_get_code(event) != LV_EVENT_CLICKED) {
-            return;
-        }
-
-        auto* indev = static_cast<lv_indev_t*>(lv_event_get_target(event));
-        if (indev == nullptr || lv_indev_get_short_click_streak(indev) % kDoubleTapClickCount != 0) {
-            return;
-        }
-
-        ESP_LOGI(TAG, "Double tap detected, toggle chat state");
-        Application::GetInstance().ToggleChatState();
     }
 
     void InitializeTouch() {
@@ -343,9 +183,6 @@ private:
         };
         if (touch_cfg.disp != nullptr) {
             touch_indev_ = lvgl_port_add_touch(&touch_cfg);
-            if (touch_indev_ != nullptr) {
-                lv_indev_add_event_cb(touch_indev_, TouchEventCallback, LV_EVENT_CLICKED, this);
-            }
             ESP_LOGI(TAG, "Touch panel initialized successfully");
         } else {
             ESP_LOGE(TAG, "Touch display is not initialized");

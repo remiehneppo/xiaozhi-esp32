@@ -61,6 +61,7 @@ private:
     const lv_font_t* GetLargeIconFont() const;
     void ApplyStatusBarTheme();
     void UpdateStatusBarNavigation();
+    void ShowWifiSelectionStep();
 
     // WiFi setup widgets
     lv_obj_t* wifi_select_label_ = nullptr;
@@ -71,6 +72,7 @@ private:
     lv_obj_t* wifi_select_btn_ = nullptr;
     lv_obj_t* wifi_connect_btn_ = nullptr;
     bool wifi_scan_has_results_ = false;
+    bool wifi_password_step_active_ = false;
     uint32_t wifi_scan_generation_ = 0;
     std::string selected_wifi_ssid_;
     void ShowWifiPasswordStep(const char* ssid);

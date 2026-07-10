@@ -87,7 +87,7 @@ void StyleModernCard(lv_obj_t* obj, LvglTheme* theme, lv_color_t accent, lv_opa_
     lv_obj_set_style_radius(obj, 8, 0);
     lv_obj_set_style_bg_color(obj, theme ? theme->assistant_bubble_color() : lv_color_hex(0x1E293B), 0);
     lv_obj_set_style_bg_opa(obj, bg_opa, 0);
-    lv_obj_set_style_border_color(obj, accent, 0);
+    lv_obj_set_style_border_color(obj, theme ? theme->border_color() : accent, 0);
     lv_obj_set_style_border_width(obj, 1, 0);
 }
 
@@ -103,6 +103,10 @@ void StyleWhiteLabel(lv_obj_t* label) {
     lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
 }
 
+void StyleOnAccentText(lv_obj_t* obj) {
+    lv_obj_set_style_text_color(obj, lv_color_hex(0xFFFFFF), 0);
+}
+
 void HandleMicActionClicked(lv_event_t* e) {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
         return;
@@ -114,6 +118,16 @@ void HandleMicActionClicked(lv_event_t* e) {
 
 lv_obj_tree_walk_res_t ApplyLabelTextColor(lv_obj_t* obj, void* user_data) {
     if (lv_obj_check_type(obj, &lv_label_class)) {
+        auto* parent = lv_obj_get_parent(obj);
+        if (parent != nullptr && lv_obj_check_type(parent, &lv_button_class)) {
+            return LV_OBJ_TREE_WALK_NEXT;
+        }
+
+        lv_color_t current = lv_obj_get_style_text_color(obj, LV_PART_MAIN);
+        if (lv_color_eq(current, lv_color_hex(0xFFFFFF))) {
+            return LV_OBJ_TREE_WALK_NEXT;
+        }
+
         auto* color = static_cast<lv_color_t*>(user_data);
         lv_obj_set_style_text_color(obj, *color, 0);
     }
@@ -248,6 +262,10 @@ void LvglTouchUi::CreateStatusBar() {
         auto* ui = static_cast<LvglTouchUi*>(lv_event_get_user_data(e));
         if (ui->keyboard) {
             lv_obj_add_flag(ui->keyboard, LV_OBJ_FLAG_HIDDEN);
+        }
+        if (ui->active_page_ == PageType::kPageWifiSetup && ui->wifi_password_step_active_) {
+            ui->ShowWifiSelectionStep();
+            return;
         }
         ui->ShowMainGridPage();
     }, LV_EVENT_CLICKED, this);
@@ -480,6 +498,7 @@ void LvglTouchUi::ShowChatPage() {
     lv_obj_set_style_border_width(bottom_panel, 0, 0);
     lv_obj_set_style_bg_opa(bottom_panel, LV_OPA_TRANSP, 0);
     StyleAccentSurface(bottom_panel, GetPageAccentColor(0), LV_OPA_COVER);
+    StyleOnAccentText(bottom_panel);
     lv_obj_set_flex_flow(bottom_panel, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(bottom_panel, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
@@ -499,6 +518,7 @@ void LvglTouchUi::ShowChatPage() {
     // Mic Status Icon
     mic_status_icon = lv_label_create(status_container);
     lv_obj_set_style_text_font(mic_status_icon, large_icon_font, 0);
+    StyleOnAccentText(mic_status_icon);
     lv_label_set_text(mic_status_icon, FONT_AWESOME_MICROPHONE);
     lv_obj_set_style_pad_right(mic_status_icon, 4, 0);
     lv_obj_add_flag(mic_status_icon, LV_OBJ_FLAG_CLICKABLE);
@@ -507,7 +527,9 @@ void LvglTouchUi::ShowChatPage() {
     // Mic Status Label
     mic_status_label = lv_label_create(status_container);
     lv_obj_set_flex_grow(mic_status_label, 1);
-    ConfigureDotLabel(mic_status_label, text_font, 1, LV_TEXT_ALIGN_RIGHT);
+    lv_obj_set_style_min_width(mic_status_label, 96, 0);
+    ConfigureDotLabel(mic_status_label, text_font, 120, LV_TEXT_ALIGN_RIGHT);
+    StyleOnAccentText(mic_status_label);
     lv_label_set_text(mic_status_label, "Đang chờ...");
     lv_obj_add_flag(mic_status_label, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(mic_status_label, HandleMicActionClicked, LV_EVENT_CLICKED, this);
@@ -591,13 +613,11 @@ void LvglTouchUi::UpdateMicStatusIndicator() {
     if (!mic_status_icon || !mic_status_label) return;
 
     DisplayLockGuard lock(this);
-    auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
-
-    // Default colors
-    lv_color_t normal_color = theme ? theme->text_color() : lv_color_hex(0xFFFFFF);
-    lv_color_t active_color = lv_color_hex(0x2ECC71); // Green
-    lv_color_t speaking_color = lv_color_hex(0x3498DB); // Blue
-    lv_color_t warning_color = lv_color_hex(0xE74C3C); // Red
+    // The mic panel sits on an accent surface, so keep icon/text high-contrast in both themes.
+    lv_color_t normal_color = lv_color_hex(0xFFFFFF);
+    lv_color_t active_color = lv_color_hex(0xFFFFFF);
+    lv_color_t speaking_color = lv_color_hex(0xFFFFFF);
+    lv_color_t warning_color = lv_color_hex(0xFFFFFF);
 
     // Clean animation if any
     lv_anim_del(mic_status_icon, nullptr);
@@ -1196,7 +1216,7 @@ void LvglTouchUi::ShowMusicPlayerPage() {
         lv_obj_set_size(btn, width, 36);
         StyleAccentButton(btn, GetPageAccentColor(4));
         lv_obj_t* lbl = lv_label_create(btn);
-        ConfigureButtonLabel(lbl, text_font);
+        ConfigureButtonLabel(lbl, GetIconFont());
         lv_label_set_text(lbl, icon);
         lv_obj_center(lbl);
         lv_obj_add_state(btn, LV_STATE_DISABLED);
@@ -1206,6 +1226,7 @@ void LvglTouchUi::ShowMusicPlayerPage() {
     create_control(FONT_AWESOME_BACKWARD_STEP, 60);
     lv_obj_t* play_btn = create_control(FONT_AWESOME_PLAY, 72);
     create_control(FONT_AWESOME_FORWARD_STEP, 60);
+    lv_obj_clear_state(play_btn, LV_STATE_DISABLED);
 
     lv_obj_t* volume_row = lv_obj_create(player_card);
     lv_obj_set_size(volume_row, LV_PCT(100), LV_SIZE_CONTENT);
@@ -1332,7 +1353,7 @@ void LvglTouchUi::ShowVideoPlayerPage() {
         lv_obj_set_size(btn, width, 36);
         StyleAccentButton(btn, GetPageAccentColor(5));
         lv_obj_t* lbl = lv_label_create(btn);
-        ConfigureButtonLabel(lbl, text_font);
+        ConfigureButtonLabel(lbl, GetIconFont());
         lv_label_set_text(lbl, icon);
         lv_obj_center(lbl);
         lv_obj_add_state(btn, LV_STATE_DISABLED);
@@ -1355,6 +1376,7 @@ void LvglTouchUi::ShowWifiSetupPage() {
         active_page_ = PageType::kPageWifiSetup;
         UpdateStatusBarNavigation();
         wifi_scan_has_results_ = false;
+        wifi_password_step_active_ = false;
         selected_wifi_ssid_.clear();
 
         lv_obj_clean(page_container);
@@ -1597,6 +1619,10 @@ void LvglTouchUi::SetTheme(Theme* theme) {
         display_->SetTheme(theme);
     }
 
+    if (!setup_ui_called_ || page_container == nullptr) {
+        return;
+    }
+
     auto* lvgl_theme = dynamic_cast<LvglTheme*>(current_theme_);
     if (lvgl_theme && master_container) {
         DisplayLockGuard lock(this);
@@ -1643,6 +1669,9 @@ void LvglTouchUi::ApplyStatusBarTheme() {
     auto* theme = dynamic_cast<LvglTheme*>(current_theme_);
     lv_color_t text_color = theme ? theme->text_color() : lv_color_hex(0xFFFFFF);
     lv_color_t bar_color = theme ? theme->assistant_bubble_color() : lv_color_hex(0x111827);
+    if (theme != nullptr && theme->name() == "light") {
+        bar_color = theme->chat_background_color();
+    }
     lv_color_t border_color = theme ? theme->border_color() : lv_color_hex(0x374151);
 
     if (top_bar != nullptr) {
@@ -1719,6 +1748,7 @@ void LvglTouchUi::LeaveWifiSetupPage() {
     if (active_page_ == PageType::kPageWifiSetup) {
         ++wifi_scan_generation_;
         wifi_scan_has_results_ = false;
+        wifi_password_step_active_ = false;
         selected_wifi_ssid_.clear();
     }
 }
@@ -1739,6 +1769,7 @@ void LvglTouchUi::ResetPageWidgets() {
     wifi_select_btn_ = nullptr;
     wifi_connect_btn_ = nullptr;
     wifi_scan_has_results_ = false;
+    wifi_password_step_active_ = false;
     selected_wifi_ssid_.clear();
     chat_box = nullptr;
     mic_status_label = nullptr;
@@ -1784,8 +1815,13 @@ void LvglTouchUi::HandleDeviceStateChange(DeviceState old_state, DeviceState new
     wifi_connect_attempts_ = GetNextWifiConnectAttempts(wifi_connect_attempts_, new_state);
 
     TouchUiPageTarget page_target = GetTouchUiPageTarget(old_state, new_state);
+    const bool audio_channel_connecting =
+        active_page_ == PageType::kPageChat &&
+        new_state == kDeviceStateConnecting &&
+        (old_state == kDeviceStateIdle || old_state == kDeviceStateListening || old_state == kDeviceStateSpeaking);
     if (active_page_ == PageType::kPageChat &&
-        (page_target == TouchUiPageTarget::kMainGrid || page_target == TouchUiPageTarget::kWifiConnect)) {
+        (page_target == TouchUiPageTarget::kMainGrid ||
+         (page_target == TouchUiPageTarget::kWifiConnect && audio_channel_connecting))) {
         page_target = TouchUiPageTarget::kNone;
     }
 
@@ -1877,6 +1913,7 @@ void LvglTouchUi::ShowWifiPasswordStep(const char* ssid) {
     if (selected_wifi_ssid_.empty()) {
         return;
     }
+    wifi_password_step_active_ = true;
 
     if (wifi_select_label_ != nullptr) {
         lv_obj_add_flag(wifi_select_label_, LV_OBJ_FLAG_HIDDEN);
@@ -1905,6 +1942,41 @@ void LvglTouchUi::ShowWifiPasswordStep(const char* ssid) {
     if (keyboard != nullptr) {
         lv_keyboard_set_textarea(keyboard, password_textarea);
         lv_obj_remove_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+void LvglTouchUi::ShowWifiSelectionStep() {
+    wifi_password_step_active_ = false;
+    selected_wifi_ssid_.clear();
+
+    if (keyboard != nullptr) {
+        lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (wifi_password_label_ != nullptr) {
+        lv_obj_add_flag(wifi_password_label_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (password_textarea != nullptr) {
+        lv_textarea_set_text(password_textarea, "");
+        lv_obj_add_flag(password_textarea, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_state(password_textarea, LV_STATE_FOCUSED);
+    }
+    if (wifi_connect_btn_ != nullptr) {
+        lv_obj_add_flag(wifi_connect_btn_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (wifi_select_label_ != nullptr) {
+        lv_obj_remove_flag(wifi_select_label_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (wifi_roller != nullptr) {
+        lv_obj_remove_flag(wifi_roller, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_scroll_to_view(wifi_roller, LV_ANIM_OFF);
+    }
+    if (wifi_select_btn_ != nullptr) {
+        lv_obj_remove_flag(wifi_select_btn_, LV_OBJ_FLAG_HIDDEN);
+        if (wifi_scan_has_results_) {
+            lv_obj_clear_state(wifi_select_btn_, LV_STATE_DISABLED);
+        } else {
+            lv_obj_add_state(wifi_select_btn_, LV_STATE_DISABLED);
+        }
     }
 }
 
